@@ -25,11 +25,18 @@ const AnimatedContainer = ({
     return () => clearTimeout(timer);
   }, [delay]);
 
+  const animationClasses = {
+    "fade-in": "animate-fade-in",
+    "slide-up": "animate-slide-up",
+    "slide-down": "animate-slide-down",
+    "scale-in": "animate-scale-in"
+  };
+
   return (
     <div
       className={cn(
         "transition-all duration-500 ease-out",
-        isVisible ? `animate-${animation} opacity-100` : "opacity-0",
+        isVisible ? animationClasses[animation] + " opacity-100" : "opacity-0",
         className
       )}
       style={{ animationDelay: `${delay}ms` }}

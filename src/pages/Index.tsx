@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
 import { cn } from "@/lib/utils";
+import { PlusCircle, Zap } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -34,9 +35,7 @@ const Index = () => {
               onMouseLeave={() => setHoverButton(null)}
             >
               <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-800">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <PlusCircle className="h-8 w-8" />
               </div>
               <h2 className="text-2xl font-semibold mb-3">Create a Quiz</h2>
               <p className="text-gray-600 mb-6">
@@ -62,9 +61,7 @@ const Index = () => {
               onMouseLeave={() => setHoverButton(null)}
             >
               <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-800">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <Zap className="h-8 w-8" />
               </div>
               <h2 className="text-2xl font-semibold mb-3">Join a Quiz</h2>
               <p className="text-gray-600 mb-6">
@@ -72,6 +69,7 @@ const Index = () => {
               </p>
               <Button 
                 size="lg" 
+                variant="secondary"
                 onClick={() => navigate("/join")}
                 fullWidth
               >

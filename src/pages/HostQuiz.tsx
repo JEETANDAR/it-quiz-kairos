@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
 import Timer from "@/components/Timer";
 import QuestionCard from "@/components/QuestionCard";
+import { cn } from "@/lib/utils";
 import { 
   getQuizById, 
   getGameSessionById, 
@@ -17,6 +17,7 @@ import {
   Question
 } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
+import { Trophy, Users, Award } from "lucide-react";
 
 enum HostView {
   LOBBY,
@@ -306,6 +307,41 @@ const HostQuiz = () => {
           onAnswer={() => {}}
           isHost={true}
         />
+
+        {gameSession && gameSession.players.length > 0 && (
+          <AnimatedContainer delay={200} className="mt-8 glass rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Users className="text-blue-500" />
+              <h3 className="text-lg font-semibold">Live Leaderboard</h3>
+            </div>
+            <div className="space-y-2">
+              {[...gameSession.players]
+                .sort((a, b) => b.totalPoints - a.totalPoints)
+                .slice(0, 5)
+                .map((player, index) => (
+                <div key={player.id} className={cn(
+                  "flex justify-between items-center p-3 rounded-lg",
+                  index === 0 ? "bg-quiz-yellow/20" : 
+                  index === 1 ? "bg-blue-100" : 
+                  index === 2 ? "bg-orange-100" : "bg-gray-100"
+                )}>
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
+                      index === 0 ? "bg-quiz-yellow" : 
+                      index === 1 ? "bg-blue-500" : 
+                      index === 2 ? "bg-orange-500" : "bg-gray-400"
+                    )}>
+                      {index + 1}
+                    </div>
+                    <span className="font-medium">{player.name}</span>
+                  </div>
+                  <span className="font-semibold">{player.totalPoints} pts</span>
+                </div>
+              ))}
+            </div>
+          </AnimatedContainer>
+        )}
       </div>
     );
   };
@@ -328,6 +364,16 @@ const HostQuiz = () => {
         answerCounts[answer.answerIndex]++;
       }
     });
+    
+    // Sort players by points for this question
+    const playersWithPointsThisQuestion = gameSession.players.map(player => {
+      const answer = player.answers.find(a => a.questionIndex === gameSession.currentQuestionIndex);
+      return {
+        ...player,
+        pointsThisQuestion: answer?.points || 0,
+        isCorrect: answer?.correct || false
+      };
+    }).sort((a, b) => b.pointsThisQuestion - a.pointsThisQuestion);
     
     return (
       <div className="max-w-4xl mx-auto">
@@ -357,7 +403,34 @@ const HostQuiz = () => {
           isHost={true}
         />
         
-        <AnimatedContainer delay={200} className="mt-8 flex justify-end">
+        <AnimatedContainer delay={200} className="glass rounded-xl p-6 my-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="text-quiz-yellow" />
+            <h3 className="text-lg font-semibold">Question Leaderboard</h3>
+          </div>
+          
+          <div className="space-y-2 mb-6">
+            {playersWithPointsThisQuestion.slice(0, 5).map((player, index) => (
+              <div key={player.id} className="flex justify-between items-center p-3 rounded-lg bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
+                    index === 0 ? "bg-quiz-yellow" : 
+                    index === 1 ? "bg-blue-500" : 
+                    index === 2 ? "bg-orange-500" : "bg-gray-400"
+                  )}>
+                    {index + 1}
+                  </div>
+                  <span className="font-medium">{player.name}</span>
+                  {player.isCorrect && <Check className="h-4 w-4 text-green-500" />}
+                </div>
+                <span className="font-semibold">{player.pointsThisQuestion} pts</span>
+              </div>
+            ))}
+          </div>
+        </AnimatedContainer>
+        
+        <AnimatedContainer delay={300} className="mt-8 flex justify-end">
           <Button onClick={handleNextQuestion}>
             {gameSession.currentQuestionIndex < (quiz?.questions.length || 0) - 1
               ? "Next Question"
@@ -377,6 +450,9 @@ const HostQuiz = () => {
     return (
       <div className="max-w-3xl mx-auto">
         <AnimatedContainer className="glass rounded-xl p-6 mb-8 text-center">
+          <div className="flex justify-center mb-4">
+            <Award className="h-12 w-12 text-quiz-yellow" />
+          </div>
           <h2 className="text-3xl font-bold mb-2">Final Results</h2>
           <p className="text-gray-600 mb-6">
             {quiz?.title} • {quiz?.questions.length} questions

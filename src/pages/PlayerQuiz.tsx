@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -15,6 +14,7 @@ import {
   Player
 } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
+import { HourglassIcon, Award, Check, X } from "lucide-react";
 
 enum PlayerView {
   WAITING,
@@ -39,14 +39,12 @@ const PlayerQuiz = () => {
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null);
   const [pointsEarned, setPointsEarned] = useState<number>(0);
 
-  // Initialize player session
   useEffect(() => {
     if (!gameId) {
       navigate("/join");
       return;
     }
 
-    // Get player info from session storage
     const playerString = sessionStorage.getItem("currentPlayer");
     if (!playerString) {
       navigate("/join");
@@ -62,7 +60,6 @@ const PlayerQuiz = () => {
       
       setCurrentPlayer(player);
       
-      // Load initial game state
       const session = getGameSessionById(gameId);
       if (!session) {
         toast({
@@ -76,7 +73,6 @@ const PlayerQuiz = () => {
       
       setGameSession(session);
       
-      // Load quiz data
       const quizData = getQuizById(session.quizId);
       if (!quizData) {
         toast({
@@ -90,11 +86,9 @@ const PlayerQuiz = () => {
       
       setQuiz(quizData);
       
-      // Set the appropriate view based on game state
       if (session.status === "waiting") {
         setPlayerView(PlayerView.WAITING);
       } else if (session.status === "active") {
-        // Check if player has already answered current question
         const playerObj = session.players.find(p => p.id === player.playerId);
         if (playerObj) {
           const hasAnsweredCurrent = playerObj.answers.some(
@@ -109,7 +103,6 @@ const PlayerQuiz = () => {
             setAnswerTime(Date.now());
           }
         } else {
-          // Player not found in session
           navigate("/join");
         }
       } else if (session.status === "finished") {
@@ -121,7 +114,6 @@ const PlayerQuiz = () => {
     }
   }, [gameId, navigate, toast]);
 
-  // Set up polling to refresh game state
   useEffect(() => {
     if (!gameId || !currentPlayer) return;
     
@@ -129,7 +121,6 @@ const PlayerQuiz = () => {
       const updatedSession = getGameSessionById(gameId);
       
       if (!updatedSession) {
-        // Game no longer exists
         clearInterval(interval);
         toast({
           title: "Game ended",
@@ -140,13 +131,10 @@ const PlayerQuiz = () => {
         return;
       }
       
-      // Only update if there's a change
       if (JSON.stringify(updatedSession) !== JSON.stringify(gameSession)) {
         setGameSession(updatedSession);
         
-        // Handle game state changes
         if (updatedSession.status === "active" && playerView === PlayerView.WAITING) {
-          // Game just started
           if (quiz) {
             setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
             setPlayerView(PlayerView.QUESTION);
@@ -155,7 +143,6 @@ const PlayerQuiz = () => {
           }
         } else if (updatedSession.status === "active" && 
                   gameSession?.currentQuestionIndex !== updatedSession.currentQuestionIndex) {
-          // New question
           if (quiz) {
             setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
             setPlayerView(PlayerView.QUESTION);
@@ -165,7 +152,6 @@ const PlayerQuiz = () => {
             setPointsEarned(0);
           }
         } else if (updatedSession.status === "finished" && gameSession?.status !== "finished") {
-          // Game just ended
           setPlayerView(PlayerView.FINAL_RESULTS);
         }
       }
@@ -183,10 +169,8 @@ const PlayerQuiz = () => {
     
     setSelectedAnswer(answerIndex);
     
-    // Calculate time to answer
     const timeToAnswer = (Date.now() - answerTime) / 1000;
     
-    // Submit answer
     const answer = submitAnswer(
       gameSession.id,
       currentPlayer.playerId,
@@ -199,7 +183,6 @@ const PlayerQuiz = () => {
       setPointsEarned(answer.points);
       setPlayerView(PlayerView.ANSWER_SUBMITTED);
       
-      // Refresh player data
       const updatedSession = getGameSessionById(gameSession.id);
       if (updatedSession) {
         setGameSession(updatedSession);
@@ -218,7 +201,6 @@ const PlayerQuiz = () => {
     navigate("/");
   };
 
-  // Render different views based on game state
   const renderView = () => {
     switch (playerView) {
       case PlayerView.WAITING:
@@ -244,12 +226,7 @@ const PlayerQuiz = () => {
         <AnimatedContainer className="glass rounded-xl p-6 mb-6 text-center">
           <h2 className="text-xl font-semibold mb-4">Waiting for host to start</h2>
           <div className="flex justify-center items-center py-8">
-            <div className="w-16 h-16 relative animate-pulse-soft">
-              <div className="absolute inset-0 bg-blue-400 rounded-full opacity-25"></div>
-              <div className="absolute inset-2 bg-blue-500 rounded-full opacity-50"></div>
-              <div className="absolute inset-4 bg-blue-600 rounded-full opacity-75"></div>
-              <div className="absolute inset-6 bg-blue-700 rounded-full"></div>
-            </div>
+            <HourglassIcon className="h-12 w-12 text-blue-500 animate-pulse-soft" />
           </div>
           <p className="text-gray-600 mb-1">
             Game code: <span className="font-semibold">{gameSession.id}</span>
@@ -299,9 +276,7 @@ const PlayerQuiz = () => {
             {answerCorrect === true ? (
               <>
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="h-12 w-12 text-green-600" />
                 </div>
                 <h2 className="text-2xl font-semibold text-green-600 mb-2">Correct!</h2>
                 <p className="text-xl font-bold mb-4">+{pointsEarned} points</p>
@@ -309,9 +284,7 @@ const PlayerQuiz = () => {
             ) : answerCorrect === false ? (
               <>
                 <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="h-12 w-12 text-red-600" />
                 </div>
                 <h2 className="text-2xl font-semibold text-red-600 mb-2">Incorrect</h2>
                 <p className="text-xl mb-4">Better luck next time!</p>
@@ -319,9 +292,7 @@ const PlayerQuiz = () => {
             ) : (
               <>
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="h-12 w-12 text-blue-600" />
                 </div>
                 <h2 className="text-2xl font-semibold mb-2">Answer received!</h2>
               </>
@@ -345,17 +316,18 @@ const PlayerQuiz = () => {
   const renderFinalResults = () => {
     if (!gameSession || !currentPlayer) return null;
     
-    // Find current player's result
     const player = gameSession.players.find(p => p.id === currentPlayer.playerId);
     if (!player) return null;
     
-    // Get player ranking
     const sortedPlayers = [...gameSession.players].sort((a, b) => b.totalPoints - a.totalPoints);
     const playerRank = sortedPlayers.findIndex(p => p.id === player.id) + 1;
     
     return (
       <div className="max-w-md mx-auto">
         <AnimatedContainer className="glass rounded-xl p-8 text-center mb-6">
+          <div className="mb-4">
+            <Award className="h-16 w-16 mx-auto mb-4 text-quiz-yellow" />
+          </div>
           <h2 className="text-3xl font-bold mb-4">Game Over!</h2>
           
           <div className="py-6">

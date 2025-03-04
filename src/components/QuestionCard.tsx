@@ -3,6 +3,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import AnimatedContainer from "./AnimatedContainer";
 import { Question } from "@/lib/quizStore";
+import { Check, X } from "lucide-react";
 
 interface QuestionCardProps {
   question: Question;
@@ -49,10 +50,22 @@ const QuestionCard = ({
           disabled={answered || isHost}
         >
           <div className="flex items-center space-x-3">
-            {index === 0 && <div className="w-6 h-6 bg-white rounded-full" />}
-            {index === 1 && <div className="w-6 h-6 bg-white rounded" />}
-            {index === 2 && <div className="w-6 h-6 bg-white rounded-full rounded-tl-none" />}
-            {index === 3 && <div className="w-6 h-6 bg-white rounded-xl border-2 border-white/80" />}
+            {index === 0 && <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+              {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+              {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+            </div>}
+            {index === 1 && <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
+              {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+              {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+            </div>}
+            {index === 2 && <div className="w-6 h-6 bg-white rounded-full rounded-tl-none flex items-center justify-center">
+              {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+              {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+            </div>}
+            {index === 3 && <div className="w-6 h-6 bg-white rounded-xl border-2 border-white/80 flex items-center justify-center">
+              {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+              {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+            </div>}
             <span className="font-medium">{option}</span>
           </div>
         </button>
