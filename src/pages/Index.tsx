@@ -1,11 +1,99 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Button from "@/components/Button";
+import AnimatedContainer from "@/components/AnimatedContainer";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [hoverButton, setHoverButton] = useState<string | null>(null);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen animated-bg overflow-hidden">
+      <div className="container max-w-6xl mx-auto px-4 py-12 md:py-24">
+        <AnimatedContainer animation="slide-down" className="text-center mb-16">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
+              Quizzy
+            </span>
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
+            Create and play interactive quizzes in real-time.
+          </p>
+        </AnimatedContainer>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <AnimatedContainer delay={200} animation="slide-up">
+            <div 
+              className={cn(
+                "glass rounded-2xl p-8 text-center transition-all duration-300",
+                hoverButton === "create" ? "shadow-lg scale-[1.01]" : "shadow"
+              )}
+              onMouseEnter={() => setHoverButton("create")}
+              onMouseLeave={() => setHoverButton(null)}
+            >
+              <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-800">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-semibold mb-3">Create a Quiz</h2>
+              <p className="text-gray-600 mb-6">
+                Build your own quiz with custom questions and share it with others.
+              </p>
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/create")}
+                fullWidth
+              >
+                Start Creating
+              </Button>
+            </div>
+          </AnimatedContainer>
+
+          <AnimatedContainer delay={300} animation="slide-up">
+            <div 
+              className={cn(
+                "glass rounded-2xl p-8 text-center transition-all duration-300",
+                hoverButton === "join" ? "shadow-lg scale-[1.01]" : "shadow"
+              )}
+              onMouseEnter={() => setHoverButton("join")}
+              onMouseLeave={() => setHoverButton(null)}
+            >
+              <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-800">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-semibold mb-3">Join a Quiz</h2>
+              <p className="text-gray-600 mb-6">
+                Enter a game code to join an existing quiz session.
+              </p>
+              <Button 
+                size="lg" 
+                onClick={() => navigate("/join")}
+                fullWidth
+              >
+                Join Quiz
+              </Button>
+            </div>
+          </AnimatedContainer>
+        </div>
+
+        <AnimatedContainer delay={400} className="text-center mt-16">
+          <div className="glass rounded-xl p-6 inline-block">
+            <p className="text-gray-600 mb-3">
+              Already have a quiz?
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/my-quizzes")}
+            >
+              View My Quizzes
+            </Button>
+          </div>
+        </AnimatedContainer>
       </div>
     </div>
   );
