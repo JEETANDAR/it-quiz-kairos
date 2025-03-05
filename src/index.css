@@ -147,7 +147,7 @@
 }
 
 .interactive-option {
-  @apply transform transition-all duration-200 hover:scale-102 active:scale-98 hover:shadow-lg;
+  @apply transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg;
 }
 
 /* Improved text contrast for better visibility */
@@ -162,7 +162,7 @@
 }
 
 .leaderboard-item:hover {
-  @apply bg-secondary/80 border-primary/30 transform scale-102;
+  @apply bg-secondary/80 border-primary/30 transform scale-[1.02];
 }
 
 /* Animated score */
