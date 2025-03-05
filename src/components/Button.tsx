@@ -20,8 +20,8 @@ const Button = ({
   const baseStyles = "rounded-lg font-medium transition-all duration-200 inline-flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 btn-hover interactive-btn";
   
   const variants = {
-    primary: "bg-primary text-white hover:bg-primary/90 focus:ring-primary shadow-md",
-    secondary: "bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500 shadow-md",
+    primary: "bg-primary text-white hover:bg-primary/90 focus:ring-primary shadow-md border border-white/10",
+    secondary: "bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-500 shadow-md border border-white/10",
     outline: "border-2 border-primary bg-transparent text-primary hover:bg-primary/10 focus:ring-primary shadow",
     ghost: "text-primary hover:bg-primary/10 focus:ring-primary"
   };

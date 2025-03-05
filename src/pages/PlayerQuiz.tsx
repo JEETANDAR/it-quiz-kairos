@@ -20,6 +20,7 @@ enum PlayerView {
   WAITING,
   QUESTION,
   ANSWER_SUBMITTED,
+  LEADERBOARD,
   FINAL_RESULTS
 }
 
@@ -183,7 +184,6 @@ const PlayerQuiz = () => {
       setAnswerCorrect(answer.correct);
       setPointsEarned(answer.points);
       setPlayerView(PlayerView.ANSWER_SUBMITTED);
-      setShowLeaderboard(true);
       
       const updatedSession = getGameSessionById(gameSession.id);
       if (updatedSession) {
@@ -191,9 +191,13 @@ const PlayerQuiz = () => {
       }
 
       const sound = new Audio(answer.correct ? '/correct.mp3' : '/incorrect.mp3');
-      sound.play().catch(() => {
-        console.log("Audio playback prevented - user hasn't interacted with the document yet");
+      sound.play().catch((err) => {
+        console.log("Error playing sound:", err);
       });
+      
+      setTimeout(() => {
+        setPlayerView(PlayerView.LEADERBOARD);
+      }, 1500);
     } else {
       toast({
         title: "Error submitting answer",
@@ -204,7 +208,11 @@ const PlayerQuiz = () => {
   };
 
   const handleToggleLeaderboard = () => {
-    setShowLeaderboard(!showLeaderboard);
+    if (playerView === PlayerView.ANSWER_SUBMITTED) {
+      setPlayerView(PlayerView.LEADERBOARD);
+    } else if (playerView === PlayerView.LEADERBOARD) {
+      setPlayerView(PlayerView.ANSWER_SUBMITTED);
+    }
   };
 
   const handleLeaveGame = () => {
@@ -220,6 +228,8 @@ const PlayerQuiz = () => {
         return renderQuestion();
       case PlayerView.ANSWER_SUBMITTED:
         return renderAnswerSubmitted();
+      case PlayerView.LEADERBOARD:
+        return renderLeaderboard();
       case PlayerView.FINAL_RESULTS:
         return renderFinalResults();
       default:
@@ -265,7 +275,7 @@ const PlayerQuiz = () => {
     return (
       <div className="max-w-4xl mx-auto">
         <AnimatedContainer className="text-center mb-6">
-          <h2 className="text-2xl font-semibold mb-2">Choose your answer</h2>
+          <h2 className="text-2xl font-semibold mb-2 text-high-contrast">Choose your answer</h2>
           <p className="text-muted-foreground">
             Faster answers get more points!
           </p>
@@ -283,12 +293,6 @@ const PlayerQuiz = () => {
   const renderAnswerSubmitted = () => {
     if (!gameSession || !currentPlayer) return null;
     
-    const playerRank = [...gameSession.players]
-      .sort((a, b) => b.totalPoints - a.totalPoints)
-      .findIndex(p => p.id === currentPlayer.playerId) + 1;
-    
-    const currentPlayerData = gameSession.players.find(p => p.id === currentPlayer.playerId);
-    
     return (
       <div className="max-w-md mx-auto">
         <AnimatedContainer className="glass rounded-xl p-8 text-center">
@@ -299,7 +303,7 @@ const PlayerQuiz = () => {
                   <Check className="h-12 w-12 text-green-500" />
                 </div>
                 <h2 className="text-2xl font-semibold text-green-500 mb-2">Correct!</h2>
-                <p className="text-xl font-bold mb-4">+{pointsEarned} points</p>
+                <p className="text-xl font-bold mb-4 score-animate">+{pointsEarned} points</p>
               </>
             ) : answerCorrect === false ? (
               <>
@@ -307,14 +311,14 @@ const PlayerQuiz = () => {
                   <X className="h-12 w-12 text-red-500" />
                 </div>
                 <h2 className="text-2xl font-semibold text-red-500 mb-2">Incorrect</h2>
-                <p className="text-xl mb-4">Better luck next time!</p>
+                <p className="text-xl mb-4 text-high-contrast">Better luck next time!</p>
               </>
             ) : (
               <>
                 <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Check className="h-12 w-12 text-blue-500" />
                 </div>
-                <h2 className="text-2xl font-semibold mb-2">Answer received!</h2>
+                <h2 className="text-2xl font-semibold mb-2 text-high-contrast">Answer received!</h2>
               </>
             )}
           </div>
@@ -323,84 +327,91 @@ const PlayerQuiz = () => {
             Waiting for next question...
           </p>
           
-          {showLeaderboard ? (
-            <AnimatedContainer className="mt-4 mb-6">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Trophy className="text-quiz-yellow" />
-                <h3 className="text-lg font-semibold">Current Standings</h3>
-              </div>
-              
-              <div className="text-center mb-3">
-                <p className="text-muted-foreground">Your rank</p>
-                <p className={cn(
-                  "text-2xl font-bold",
-                  playerRank === 1 ? "text-quiz-yellow" :
-                  playerRank === 2 ? "text-blue-500" :
-                  playerRank === 3 ? "text-orange-500" : ""
-                )}>
-                  {playerRank === 1 ? "1st" :
-                   playerRank === 2 ? "2nd" :
-                   playerRank === 3 ? "3rd" :
-                   `${playerRank}th`} 
-                  <span className="text-foreground"> of {gameSession.players.length}</span>
-                </p>
-              </div>
-              
-              <div className="space-y-2 mt-4">
-                {[...gameSession.players]
-                  .sort((a, b) => b.totalPoints - a.totalPoints)
-                  .slice(0, 5)
-                  .map((player, index) => (
-                  <div key={player.id} className={cn(
-                    "flex justify-between items-center p-3 rounded-lg",
-                    player.id === currentPlayer.playerId ? "bg-secondary" : 
-                    index === 0 ? "bg-quiz-yellow/20" : 
-                    index === 1 ? "bg-blue-500/20" : 
-                    index === 2 ? "bg-orange-500/20" : "bg-muted/30"
+          <div className="mt-4 flex justify-center items-center py-2">
+            <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1"></div>
+            <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1" style={{ animationDelay: "0.2s" }}></div>
+            <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1" style={{ animationDelay: "0.4s" }}></div>
+          </div>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleToggleLeaderboard}
+            className="mt-6"
+            size="sm"
+          >
+            Show Leaderboard
+          </Button>
+        </AnimatedContainer>
+      </div>
+    );
+  };
+
+  const renderLeaderboard = () => {
+    if (!gameSession || !currentPlayer) return null;
+    
+    const playerRank = [...gameSession.players]
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .findIndex(p => p.id === currentPlayer.playerId) + 1;
+    
+    return (
+      <div className="max-w-md mx-auto">
+        <AnimatedContainer className="glass rounded-xl p-8 text-center mb-6">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Trophy className="text-quiz-yellow" />
+            <h3 className="text-xl font-semibold text-high-contrast">Current Standings</h3>
+          </div>
+          
+          <div className="text-center mb-6">
+            <p className="text-muted-foreground mb-1">Your rank</p>
+            <p className={cn(
+              "text-2xl font-bold",
+              playerRank === 1 ? "text-quiz-yellow" :
+              playerRank === 2 ? "text-blue-500" :
+              playerRank === 3 ? "text-orange-500" : ""
+            )}>
+              {playerRank === 1 ? "1st" :
+               playerRank === 2 ? "2nd" :
+               playerRank === 3 ? "3rd" :
+               `${playerRank}th`} 
+              <span className="text-foreground"> of {gameSession.players.length}</span>
+            </p>
+          </div>
+          
+          <div className="space-y-3 mt-4">
+            {[...gameSession.players]
+              .sort((a, b) => b.totalPoints - a.totalPoints)
+              .map((player, index) => (
+              <div key={player.id} className={cn(
+                "leaderboard-item flex justify-between items-center p-3 rounded-lg",
+                player.id === currentPlayer.playerId ? "bg-secondary border border-primary/30" : 
+                index === 0 ? "bg-quiz-yellow/20 border border-quiz-yellow/30" : 
+                index === 1 ? "bg-blue-500/20 border border-blue-500/30" : 
+                index === 2 ? "bg-orange-500/20 border border-orange-500/30" : ""
+              )}>
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
+                    index === 0 ? "bg-quiz-yellow" : 
+                    index === 1 ? "bg-blue-500" : 
+                    index === 2 ? "bg-orange-500" : "bg-muted"
                   )}>
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
-                        index === 0 ? "bg-quiz-yellow" : 
-                        index === 1 ? "bg-blue-500" : 
-                        index === 2 ? "bg-orange-500" : "bg-muted"
-                      )}>
-                        {index + 1}
-                      </div>
-                      <span className="font-medium">{player.name}</span>
-                    </div>
-                    <span className="font-semibold">{player.totalPoints} pts</span>
+                    {index + 1}
                   </div>
-                ))}
+                  <span className="font-medium text-high-contrast">{player.name}</span>
+                </div>
+                <span className="font-semibold">{player.totalPoints} pts</span>
               </div>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleToggleLeaderboard} 
-                className="mt-4"
-                size="sm"
-              >
-                Hide Leaderboard
-              </Button>
-            </AnimatedContainer>
-          ) : (
-            <>
-              <div className="mt-4 flex justify-center items-center py-2">
-                <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1"></div>
-                <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1" style={{ animationDelay: "0.2s" }}></div>
-                <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1" style={{ animationDelay: "0.4s" }}></div>
-              </div>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleToggleLeaderboard}
-                className="mt-6"
-                size="sm"
-              >
-                Show Leaderboard
-              </Button>
-            </>
-          )}
+            ))}
+          </div>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleToggleLeaderboard} 
+            className="mt-6"
+            size="sm"
+          >
+            Hide Leaderboard
+          </Button>
         </AnimatedContainer>
       </div>
     );
@@ -421,10 +432,10 @@ const PlayerQuiz = () => {
           <div className="mb-4">
             <Award className="h-16 w-16 mx-auto mb-4 text-quiz-yellow" />
           </div>
-          <h2 className="text-3xl font-bold mb-4">Game Over!</h2>
+          <h2 className="text-3xl font-bold mb-4 text-high-contrast">Game Over!</h2>
           
           <div className="py-6">
-            <p className="text-gray-600 mb-2">You finished</p>
+            <p className="text-muted-foreground mb-2">You finished</p>
             <div className={cn(
               "text-4xl font-bold mb-2",
               playerRank === 1 ? "text-quiz-yellow" :
@@ -436,13 +447,13 @@ const PlayerQuiz = () => {
                playerRank === 3 ? "3rd" :
                `${playerRank}th`}
             </div>
-            <p className="text-xl font-semibold mb-6">
+            <p className="text-xl font-semibold mb-6 text-high-contrast">
               {player.totalPoints} points
             </p>
             
             <div className="mb-4">
-              <p className="text-gray-600 mb-1">Correct answers</p>
-              <p className="text-2xl font-semibold">
+              <p className="text-muted-foreground mb-1">Correct answers</p>
+              <p className="text-2xl font-semibold text-high-contrast">
                 {player.answers.filter(a => a.correct).length}/{player.answers.length}
               </p>
             </div>
@@ -462,7 +473,7 @@ const PlayerQuiz = () => {
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4">
         <AnimatedContainer className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-3xl font-bold mb-2 text-high-contrast">
             {quiz?.title || "Quiz Game"}
           </h1>
         </AnimatedContainer>

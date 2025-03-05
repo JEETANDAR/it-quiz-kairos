@@ -27,15 +27,15 @@ const QuestionCard = ({
   const colors = ["quiz-option-red", "quiz-option-blue", "quiz-option-yellow", "quiz-option-green"];
 
   const renderOption = (option: string, index: number) => {
-    let optionClass = `quiz-option ${colors[index]} text-white interactive-option`;
+    let optionClass = `quiz-option ${colors[index]} text-high-contrast interactive-option`;
     
     if (answered) {
       if (index === correctAnswer) {
-        optionClass += " ring-4 ring-green-500 ring-opacity-50";
+        optionClass += " ring-4 ring-green-500 ring-opacity-80";
       } else if (index === selectedAnswer && index !== correctAnswer) {
-        optionClass += " ring-4 ring-red-500 ring-opacity-50 opacity-60";
+        optionClass += " ring-4 ring-red-500 ring-opacity-80 opacity-80";
       } else {
-        optionClass += " opacity-60";
+        optionClass += " opacity-70";
       }
     }
 
@@ -68,7 +68,7 @@ const QuestionCard = ({
               {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
               {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
             </div>}
-            <span className="font-medium">{option}</span>
+            <span className="font-medium text-lg">{option}</span>
           </div>
         </button>
       </AnimatedContainer>
@@ -79,10 +79,10 @@ const QuestionCard = ({
     <div className="w-full max-w-2xl mx-auto">
       {(!playerView || isHost) && (
         <AnimatedContainer delay={50} animation="slide-down" className="w-full">
-          <div className="bg-card rounded-xl p-6 shadow-sm mb-6">
-            <h2 className="text-xl font-semibold mb-2">{question.question}</h2>
+          <div className="bg-card rounded-xl p-6 shadow-sm mb-6 border border-white/10">
+            <h2 className="text-xl font-semibold mb-2 text-white">{question.question}</h2>
             {question.image && (
-              <div className="my-4 rounded-lg overflow-hidden">
+              <div className="my-4 rounded-lg overflow-hidden border border-white/20">
                 <img 
                   src={question.image} 
                   alt={question.question} 

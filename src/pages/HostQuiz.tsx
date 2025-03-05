@@ -4,6 +4,7 @@ import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
 import Timer from "@/components/Timer";
 import QuestionCard from "@/components/QuestionCard";
+import ScoreExporter from "@/components/ScoreExporter";
 import { cn } from "@/lib/utils";
 import { 
   getQuizById, 
@@ -17,7 +18,7 @@ import {
   Question
 } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Users, Award, Check } from "lucide-react";
+import { Trophy, Users, Award, Check, Download } from "lucide-react";
 
 enum HostView {
   LOBBY,
@@ -202,8 +203,8 @@ const HostQuiz = () => {
 
   const handleTimeUp = () => {
     const timeUpSound = new Audio('/time-up.mp3');
-    timeUpSound.play().catch(() => {
-      console.log("Audio playback prevented - user hasn't interacted with the document yet");
+    timeUpSound.play().catch((err) => {
+      console.log("Error playing time-up sound:", err);
     });
     
     setTimerActive(false);
@@ -294,7 +295,7 @@ const HostQuiz = () => {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <AnimatedContainer>
-            <h2 className="text-2xl font-semibold">
+            <h2 className="text-2xl font-semibold text-high-contrast">
               Question {gameSession?.currentQuestionIndex !== undefined 
                 ? gameSession.currentQuestionIndex + 1 
                 : ""}
@@ -349,11 +350,11 @@ const HostQuiz = () => {
     return (
       <div className="max-w-4xl mx-auto">
         <AnimatedContainer className="glass rounded-xl p-6 mb-8 text-center">
-          <h2 className="text-2xl font-semibold mb-4">Question Results</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-high-contrast">Question Results</h2>
           <div className="flex justify-center gap-8 mb-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Responses</p>
-              <p className="text-3xl font-bold">{totalResponses}/{gameSession.players.length}</p>
+              <p className="text-3xl font-bold text-high-contrast">{totalResponses}/{gameSession.players.length}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Correct</p>
@@ -375,14 +376,22 @@ const HostQuiz = () => {
         />
         
         <AnimatedContainer delay={200} className="glass rounded-xl p-6 my-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Trophy className="text-quiz-yellow" />
-            <h3 className="text-lg font-semibold">Question Leaderboard</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Trophy className="text-quiz-yellow" />
+              <h3 className="text-lg font-semibold text-high-contrast">Question Leaderboard</h3>
+            </div>
+            {playersWithPointsThisQuestion.length > 0 && (
+              <ScoreExporter 
+                players={gameSession.players} 
+                quizTitle={quiz?.title || 'Quiz'}
+              />
+            )}
           </div>
           
           <div className="space-y-2 mb-6">
             {playersWithPointsThisQuestion.map((player, index) => (
-              <div key={player.id} className="flex justify-between items-center p-3 rounded-lg bg-secondary/30">
+              <div key={player.id} className="leaderboard-item flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
@@ -392,19 +401,21 @@ const HostQuiz = () => {
                   )}>
                     {index + 1}
                   </div>
-                  <span className="font-medium">{player.name}</span>
+                  <span className="font-medium text-high-contrast">{player.name}</span>
                   {player.isCorrect && <Check className="h-4 w-4 text-green-500" />}
                 </div>
-                <span className="font-semibold">{player.pointsThisQuestion} pts</span>
+                <span className="font-semibold score-animate">{player.pointsThisQuestion} pts</span>
               </div>
             ))}
           </div>
         </AnimatedContainer>
         
         <AnimatedContainer delay={300} className="glass rounded-xl p-6 mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Users className="text-blue-500" />
-            <h3 className="text-lg font-semibold">Overall Leaderboard</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="text-blue-500" />
+              <h3 className="text-lg font-semibold text-high-contrast">Overall Leaderboard</h3>
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -412,10 +423,10 @@ const HostQuiz = () => {
               .sort((a, b) => b.totalPoints - a.totalPoints)
               .map((player, index) => (
               <div key={player.id} className={cn(
-                "flex justify-between items-center p-3 rounded-lg",
-                index === 0 ? "bg-quiz-yellow/20" : 
-                index === 1 ? "bg-blue-500/20" : 
-                index === 2 ? "bg-orange-500/20" : "bg-muted/30"
+                "leaderboard-item flex justify-between items-center p-3 rounded-lg",
+                index === 0 ? "bg-quiz-yellow/20 border border-quiz-yellow/30" : 
+                index === 1 ? "bg-blue-500/20 border border-blue-500/30" : 
+                index === 2 ? "bg-orange-500/20 border border-orange-500/30" : ""
               )}>
                 <div className="flex items-center gap-3">
                   <div className={cn(
@@ -426,7 +437,7 @@ const HostQuiz = () => {
                   )}>
                     {index + 1}
                   </div>
-                  <span className="font-medium">{player.name}</span>
+                  <span className="font-medium text-high-contrast">{player.name}</span>
                 </div>
                 <span className="font-semibold">{player.totalPoints} pts</span>
               </div>
@@ -456,10 +467,17 @@ const HostQuiz = () => {
           <div className="flex justify-center mb-4">
             <Award className="h-12 w-12 text-quiz-yellow" />
           </div>
-          <h2 className="text-3xl font-bold mb-2">Final Results</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-3xl font-bold mb-2 text-high-contrast">Final Results</h2>
+          <p className="text-muted-foreground mb-6">
             {quiz?.title} • {quiz?.questions.length} questions
           </p>
+          
+          <div className="flex justify-center mb-6">
+            <ScoreExporter 
+              players={gameSession.players} 
+              quizTitle={quiz?.title || 'Quiz'}
+            />
+          </div>
           
           {sortedPlayers.length === 0 ? (
             <p className="text-gray-500 py-8">No players in this game</p>
@@ -471,11 +489,11 @@ const HostQuiz = () => {
                   delay={100 + (index * 100)}
                 >
                   <div className={cn(
-                    "flex items-center justify-between p-4 rounded-lg",
+                    "leaderboard-item flex items-center justify-between p-4 rounded-lg",
                     index === 0 ? "bg-quiz-yellow/20 border border-quiz-yellow/30" :
-                    index === 1 ? "bg-blue-50 border border-blue-200" :
-                    index === 2 ? "bg-orange-50 border border-orange-200" :
-                    "bg-gray-50 border border-gray-200"
+                    index === 1 ? "bg-blue-500/20 border border-blue-500/30" :
+                    index === 2 ? "bg-orange-500/20 border border-orange-500/30" :
+                    "border border-white/5"
                   )}>
                     <div className="flex items-center">
                       <div className={cn(
@@ -483,11 +501,11 @@ const HostQuiz = () => {
                         index === 0 ? "bg-quiz-yellow text-white" :
                         index === 1 ? "bg-blue-500 text-white" :
                         index === 2 ? "bg-orange-500 text-white" :
-                        "bg-gray-300 text-gray-700"
+                        "bg-muted text-gray-700"
                       )}>
                         {index + 1}
                       </div>
-                      <span className="font-medium">{player.name}</span>
+                      <span className="font-medium text-high-contrast">{player.name}</span>
                     </div>
                     <div className="font-semibold">
                       {player.totalPoints} pts
@@ -512,7 +530,7 @@ const HostQuiz = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="glass rounded-xl p-6 animate-pulse-soft">
-          <p className="text-lg">Loading quiz...</p>
+          <p className="text-lg text-high-contrast">Loading quiz...</p>
         </div>
       </div>
     );
@@ -522,7 +540,7 @@ const HostQuiz = () => {
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4">
         <AnimatedContainer className="text-center mb-10">
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-3xl font-bold mb-2 text-high-contrast">
             {quiz?.title || "Quiz Game"}
           </h1>
           {hostView === HostView.LOBBY && (
