@@ -17,7 +17,7 @@ import {
   Question
 } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Users, Award } from "lucide-react";
+import { Trophy, Users, Award, Check } from "lucide-react";
 
 enum HostView {
   LOBBY,
@@ -38,7 +38,6 @@ const HostQuiz = () => {
   const [lobbyRefreshInterval, setLobbyRefreshInterval] = useState<number | null>(null);
   const [timerActive, setTimerActive] = useState(false);
 
-  // Initialize or fetch game session
   useEffect(() => {
     if (!quizId) {
       navigate("/my-quizzes");
@@ -62,7 +61,6 @@ const HostQuiz = () => {
     };
 
     const initializeGameSession = () => {
-      // Check if host already has a session for this quiz
       const sessionString = sessionStorage.getItem("hostSession");
       
       if (sessionString) {
@@ -70,13 +68,11 @@ const HostQuiz = () => {
           const savedSession = JSON.parse(sessionString);
           
           if (savedSession.quizId === quizId) {
-            // Fetch the latest session data
             const currentSession = getGameSessionById(savedSession.gameId);
             
             if (currentSession) {
               setGameSession(currentSession);
               
-              // Determine the correct view based on session status
               if (currentSession.status === "waiting") {
                 setHostView(HostView.LOBBY);
               } else if (currentSession.status === "active") {
@@ -95,11 +91,9 @@ const HostQuiz = () => {
         }
       }
       
-      // No valid existing session, create a new one
       const newSession = createGameSession(quizId);
       setGameSession(newSession);
       
-      // Save the session info
       sessionStorage.setItem("hostSession", JSON.stringify({
         gameId: newSession.id,
         quizId
@@ -110,7 +104,6 @@ const HostQuiz = () => {
     initializeGameSession();
   }, [quizId, navigate, toast]);
 
-  // Set up a polling interval to refresh the player list in the lobby
   useEffect(() => {
     if (hostView === HostView.LOBBY && gameSession) {
       const interval = window.setInterval(() => {
@@ -143,6 +136,11 @@ const HostQuiz = () => {
       return;
     }
     
+    const startSound = new Audio('/start-game.mp3');
+    startSound.play().catch(() => {
+      console.log("Audio playback prevented - user hasn't interacted with the document yet");
+    });
+    
     const updatedSession = startGame(gameSession.id);
     
     if (updatedSession) {
@@ -159,6 +157,11 @@ const HostQuiz = () => {
   const handleNextQuestion = () => {
     if (!gameSession) return;
     
+    const nextSound = new Audio('/next-question.mp3');
+    nextSound.play().catch(() => {
+      console.log("Audio playback prevented - user hasn't interacted with the document yet");
+    });
+    
     const nextQuestionIndex = advanceQuestion(gameSession.id);
     
     if (nextQuestionIndex === null) {
@@ -170,8 +173,12 @@ const HostQuiz = () => {
       return;
     }
     
-    // Game is finished
     if (nextQuestionIndex === -1) {
+      const endSound = new Audio('/end-game.mp3');
+      endSound.play().catch(() => {
+        console.log("Audio playback prevented - user hasn't interacted with the document yet");
+      });
+      
       const finalSession = getGameSessionById(gameSession.id);
       if (finalSession) {
         setGameSession(finalSession);
@@ -180,14 +187,12 @@ const HostQuiz = () => {
       return;
     }
     
-    // Load next question
     const nextQuestion = quiz?.questions[nextQuestionIndex];
     if (nextQuestion) {
       setCurrentQuestion(nextQuestion);
       setHostView(HostView.QUESTION);
       setTimerActive(true);
       
-      // Update session data
       const updatedSession = getGameSessionById(gameSession.id);
       if (updatedSession) {
         setGameSession(updatedSession);
@@ -196,6 +201,11 @@ const HostQuiz = () => {
   };
 
   const handleTimeUp = () => {
+    const timeUpSound = new Audio('/time-up.mp3');
+    timeUpSound.play().catch(() => {
+      console.log("Audio playback prevented - user hasn't interacted with the document yet");
+    });
+    
     setTimerActive(false);
     setHostView(HostView.QUESTION_RESULTS);
   };
@@ -208,7 +218,6 @@ const HostQuiz = () => {
     navigate("/my-quizzes");
   };
 
-  // Render different views based on game state
   const renderView = () => {
     switch (hostView) {
       case HostView.LOBBY:
@@ -307,41 +316,6 @@ const HostQuiz = () => {
           onAnswer={() => {}}
           isHost={true}
         />
-
-        {gameSession && gameSession.players.length > 0 && (
-          <AnimatedContainer delay={200} className="mt-8 glass rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="text-blue-500" />
-              <h3 className="text-lg font-semibold">Live Leaderboard</h3>
-            </div>
-            <div className="space-y-2">
-              {[...gameSession.players]
-                .sort((a, b) => b.totalPoints - a.totalPoints)
-                .slice(0, 5)
-                .map((player, index) => (
-                <div key={player.id} className={cn(
-                  "flex justify-between items-center p-3 rounded-lg",
-                  index === 0 ? "bg-quiz-yellow/20" : 
-                  index === 1 ? "bg-blue-100" : 
-                  index === 2 ? "bg-orange-100" : "bg-gray-100"
-                )}>
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
-                      index === 0 ? "bg-quiz-yellow" : 
-                      index === 1 ? "bg-blue-500" : 
-                      index === 2 ? "bg-orange-500" : "bg-gray-400"
-                    )}>
-                      {index + 1}
-                    </div>
-                    <span className="font-medium">{player.name}</span>
-                  </div>
-                  <span className="font-semibold">{player.totalPoints} pts</span>
-                </div>
-              ))}
-            </div>
-          </AnimatedContainer>
-        )}
       </div>
     );
   };
@@ -349,7 +323,6 @@ const HostQuiz = () => {
   const renderQuestionResults = () => {
     if (!currentQuestion || !gameSession) return null;
     
-    // Calculate results for current question
     const playerAnswers = gameSession.players.flatMap(player => 
       player.answers.filter(a => a.questionIndex === gameSession.currentQuestionIndex)
     );
@@ -357,7 +330,6 @@ const HostQuiz = () => {
     const totalResponses = playerAnswers.length;
     const correctResponses = playerAnswers.filter(a => a.correct).length;
     
-    // Count answers per option
     const answerCounts = [0, 0, 0, 0];
     playerAnswers.forEach(answer => {
       if (answer.answerIndex >= 0 && answer.answerIndex < 4) {
@@ -365,7 +337,6 @@ const HostQuiz = () => {
       }
     });
     
-    // Sort players by points for this question
     const playersWithPointsThisQuestion = gameSession.players.map(player => {
       const answer = player.answers.find(a => a.questionIndex === gameSession.currentQuestionIndex);
       return {
@@ -381,12 +352,12 @@ const HostQuiz = () => {
           <h2 className="text-2xl font-semibold mb-4">Question Results</h2>
           <div className="flex justify-center gap-8 mb-6">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Responses</p>
+              <p className="text-sm text-muted-foreground mb-1">Responses</p>
               <p className="text-3xl font-bold">{totalResponses}/{gameSession.players.length}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Correct</p>
-              <p className="text-3xl font-bold text-green-600">
+              <p className="text-sm text-muted-foreground mb-1">Correct</p>
+              <p className="text-3xl font-bold text-green-500">
                 {totalResponses > 0 
                   ? Math.round((correctResponses / totalResponses) * 100)
                   : 0}%
@@ -410,14 +381,14 @@ const HostQuiz = () => {
           </div>
           
           <div className="space-y-2 mb-6">
-            {playersWithPointsThisQuestion.slice(0, 5).map((player, index) => (
-              <div key={player.id} className="flex justify-between items-center p-3 rounded-lg bg-gray-50">
+            {playersWithPointsThisQuestion.map((player, index) => (
+              <div key={player.id} className="flex justify-between items-center p-3 rounded-lg bg-secondary/30">
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
                     index === 0 ? "bg-quiz-yellow" : 
                     index === 1 ? "bg-blue-500" : 
-                    index === 2 ? "bg-orange-500" : "bg-gray-400"
+                    index === 2 ? "bg-orange-500" : "bg-muted"
                   )}>
                     {index + 1}
                   </div>
@@ -430,8 +401,41 @@ const HostQuiz = () => {
           </div>
         </AnimatedContainer>
         
+        <AnimatedContainer delay={300} className="glass rounded-xl p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="text-blue-500" />
+            <h3 className="text-lg font-semibold">Overall Leaderboard</h3>
+          </div>
+          
+          <div className="space-y-2">
+            {[...gameSession.players]
+              .sort((a, b) => b.totalPoints - a.totalPoints)
+              .map((player, index) => (
+              <div key={player.id} className={cn(
+                "flex justify-between items-center p-3 rounded-lg",
+                index === 0 ? "bg-quiz-yellow/20" : 
+                index === 1 ? "bg-blue-500/20" : 
+                index === 2 ? "bg-orange-500/20" : "bg-muted/30"
+              )}>
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
+                    index === 0 ? "bg-quiz-yellow" : 
+                    index === 1 ? "bg-blue-500" : 
+                    index === 2 ? "bg-orange-500" : "bg-muted"
+                  )}>
+                    {index + 1}
+                  </div>
+                  <span className="font-medium">{player.name}</span>
+                </div>
+                <span className="font-semibold">{player.totalPoints} pts</span>
+              </div>
+            ))}
+          </div>
+        </AnimatedContainer>
+        
         <AnimatedContainer delay={300} className="mt-8 flex justify-end">
-          <Button onClick={handleNextQuestion}>
+          <Button onClick={handleNextQuestion} className="interactive-btn">
             {gameSession.currentQuestionIndex < (quiz?.questions.length || 0) - 1
               ? "Next Question"
               : "See Final Results"}
@@ -444,7 +448,6 @@ const HostQuiz = () => {
   const renderFinalResults = () => {
     if (!gameSession) return null;
     
-    // Sort players by total points (highest first)
     const sortedPlayers = [...gameSession.players].sort((a, b) => b.totalPoints - a.totalPoints);
     
     return (
@@ -520,10 +523,10 @@ const HostQuiz = () => {
       <div className="container mx-auto px-4">
         <AnimatedContainer className="text-center mb-10">
           <h1 className="text-3xl font-bold mb-2">
-            {quiz.title}
+            {quiz?.title || "Quiz Game"}
           </h1>
           {hostView === HostView.LOBBY && (
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Waiting for players to join
             </p>
           )}

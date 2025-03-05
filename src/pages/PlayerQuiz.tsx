@@ -14,7 +14,7 @@ import {
   Player
 } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
-import { HourglassIcon, Award, Check, X } from "lucide-react";
+import { HourglassIcon, Award, Check, X, Trophy, Users } from "lucide-react";
 
 enum PlayerView {
   WAITING,
@@ -38,6 +38,7 @@ const PlayerQuiz = () => {
   const [sessionRefreshInterval, setSessionRefreshInterval] = useState<number | null>(null);
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null);
   const [pointsEarned, setPointsEarned] = useState<number>(0);
+  const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
 
   useEffect(() => {
     if (!gameId) {
@@ -182,11 +183,17 @@ const PlayerQuiz = () => {
       setAnswerCorrect(answer.correct);
       setPointsEarned(answer.points);
       setPlayerView(PlayerView.ANSWER_SUBMITTED);
+      setShowLeaderboard(true);
       
       const updatedSession = getGameSessionById(gameSession.id);
       if (updatedSession) {
         setGameSession(updatedSession);
       }
+
+      const sound = new Audio(answer.correct ? '/correct.mp3' : '/incorrect.mp3');
+      sound.play().catch(() => {
+        console.log("Audio playback prevented - user hasn't interacted with the document yet");
+      });
     } else {
       toast({
         title: "Error submitting answer",
@@ -194,6 +201,10 @@ const PlayerQuiz = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleToggleLeaderboard = () => {
+    setShowLeaderboard(!showLeaderboard);
   };
 
   const handleLeaveGame = () => {
@@ -255,7 +266,7 @@ const PlayerQuiz = () => {
       <div className="max-w-4xl mx-auto">
         <AnimatedContainer className="text-center mb-6">
           <h2 className="text-2xl font-semibold mb-2">Choose your answer</h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Faster answers get more points!
           </p>
         </AnimatedContainer>
@@ -263,51 +274,133 @@ const PlayerQuiz = () => {
         <QuestionCard
           question={currentQuestion}
           onAnswer={handleAnswerSelect}
+          playerView={true}
         />
       </div>
     );
   };
 
   const renderAnswerSubmitted = () => {
+    if (!gameSession || !currentPlayer) return null;
+    
+    const playerRank = [...gameSession.players]
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .findIndex(p => p.id === currentPlayer.playerId) + 1;
+    
+    const currentPlayerData = gameSession.players.find(p => p.id === currentPlayer.playerId);
+    
     return (
       <div className="max-w-md mx-auto">
         <AnimatedContainer className="glass rounded-xl p-8 text-center">
           <div className="mb-6">
             {answerCorrect === true ? (
               <>
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="h-12 w-12 text-green-600" />
+                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="h-12 w-12 text-green-500" />
                 </div>
-                <h2 className="text-2xl font-semibold text-green-600 mb-2">Correct!</h2>
+                <h2 className="text-2xl font-semibold text-green-500 mb-2">Correct!</h2>
                 <p className="text-xl font-bold mb-4">+{pointsEarned} points</p>
               </>
             ) : answerCorrect === false ? (
               <>
-                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <X className="h-12 w-12 text-red-600" />
+                <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <X className="h-12 w-12 text-red-500" />
                 </div>
-                <h2 className="text-2xl font-semibold text-red-600 mb-2">Incorrect</h2>
+                <h2 className="text-2xl font-semibold text-red-500 mb-2">Incorrect</h2>
                 <p className="text-xl mb-4">Better luck next time!</p>
               </>
             ) : (
               <>
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="h-12 w-12 text-blue-600" />
+                <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="h-12 w-12 text-blue-500" />
                 </div>
                 <h2 className="text-2xl font-semibold mb-2">Answer received!</h2>
               </>
             )}
           </div>
           
-          <p className="text-gray-600">
+          <p className="text-muted-foreground mb-4">
             Waiting for next question...
           </p>
           
-          <div className="mt-8 flex justify-center items-center py-2">
-            <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1"></div>
-            <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1" style={{ animationDelay: "0.2s" }}></div>
-            <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1" style={{ animationDelay: "0.4s" }}></div>
-          </div>
+          {showLeaderboard ? (
+            <AnimatedContainer className="mt-4 mb-6">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Trophy className="text-quiz-yellow" />
+                <h3 className="text-lg font-semibold">Current Standings</h3>
+              </div>
+              
+              <div className="text-center mb-3">
+                <p className="text-muted-foreground">Your rank</p>
+                <p className={cn(
+                  "text-2xl font-bold",
+                  playerRank === 1 ? "text-quiz-yellow" :
+                  playerRank === 2 ? "text-blue-500" :
+                  playerRank === 3 ? "text-orange-500" : ""
+                )}>
+                  {playerRank === 1 ? "1st" :
+                   playerRank === 2 ? "2nd" :
+                   playerRank === 3 ? "3rd" :
+                   `${playerRank}th`} 
+                  <span className="text-foreground"> of {gameSession.players.length}</span>
+                </p>
+              </div>
+              
+              <div className="space-y-2 mt-4">
+                {[...gameSession.players]
+                  .sort((a, b) => b.totalPoints - a.totalPoints)
+                  .slice(0, 5)
+                  .map((player, index) => (
+                  <div key={player.id} className={cn(
+                    "flex justify-between items-center p-3 rounded-lg",
+                    player.id === currentPlayer.playerId ? "bg-secondary" : 
+                    index === 0 ? "bg-quiz-yellow/20" : 
+                    index === 1 ? "bg-blue-500/20" : 
+                    index === 2 ? "bg-orange-500/20" : "bg-muted/30"
+                  )}>
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
+                        index === 0 ? "bg-quiz-yellow" : 
+                        index === 1 ? "bg-blue-500" : 
+                        index === 2 ? "bg-orange-500" : "bg-muted"
+                      )}>
+                        {index + 1}
+                      </div>
+                      <span className="font-medium">{player.name}</span>
+                    </div>
+                    <span className="font-semibold">{player.totalPoints} pts</span>
+                  </div>
+                ))}
+              </div>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleToggleLeaderboard} 
+                className="mt-4"
+                size="sm"
+              >
+                Hide Leaderboard
+              </Button>
+            </AnimatedContainer>
+          ) : (
+            <>
+              <div className="mt-4 flex justify-center items-center py-2">
+                <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1"></div>
+                <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1" style={{ animationDelay: "0.2s" }}></div>
+                <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse-soft mx-1" style={{ animationDelay: "0.4s" }}></div>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleToggleLeaderboard}
+                className="mt-6"
+                size="sm"
+              >
+                Show Leaderboard
+              </Button>
+            </>
+          )}
         </AnimatedContainer>
       </div>
     );

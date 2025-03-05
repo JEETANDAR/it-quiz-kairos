@@ -12,6 +12,7 @@ interface QuestionCardProps {
   selectedAnswer?: number;
   correctAnswer?: number;
   isHost?: boolean;
+  playerView?: boolean;
 }
 
 const QuestionCard = ({
@@ -20,12 +21,13 @@ const QuestionCard = ({
   answered = false,
   selectedAnswer,
   correctAnswer,
-  isHost = false
+  isHost = false,
+  playerView = false
 }: QuestionCardProps) => {
   const colors = ["quiz-option-red", "quiz-option-blue", "quiz-option-yellow", "quiz-option-green"];
 
   const renderOption = (option: string, index: number) => {
-    let optionClass = `quiz-option ${colors[index]} text-white`;
+    let optionClass = `quiz-option ${colors[index]} text-white interactive-option`;
     
     if (answered) {
       if (index === correctAnswer) {
@@ -75,20 +77,22 @@ const QuestionCard = ({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <AnimatedContainer delay={50} animation="slide-down" className="w-full">
-        <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-          <h2 className="text-xl font-semibold mb-2">{question.question}</h2>
-          {question.image && (
-            <div className="my-4 rounded-lg overflow-hidden">
-              <img 
-                src={question.image} 
-                alt={question.question} 
-                className="w-full h-auto object-cover"
-              />
-            </div>
-          )}
-        </div>
-      </AnimatedContainer>
+      {(!playerView || isHost) && (
+        <AnimatedContainer delay={50} animation="slide-down" className="w-full">
+          <div className="bg-card rounded-xl p-6 shadow-sm mb-6">
+            <h2 className="text-xl font-semibold mb-2">{question.question}</h2>
+            {question.image && (
+              <div className="my-4 rounded-lg overflow-hidden">
+                <img 
+                  src={question.image} 
+                  alt={question.question} 
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            )}
+          </div>
+        </AnimatedContainer>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {question.options.map((option, index) => renderOption(option, index))}
