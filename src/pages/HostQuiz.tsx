@@ -214,7 +214,7 @@ const HostQuiz = () => {
           </div>
           
           {gameSession.players.length === 0 ? <div className="text-center py-10">
-              <p className="text-gray-500">Waiting for players to join...</p>
+              <p className="text-slate-50">Waiting for players to join...</p>
             </div> : <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {gameSession.players.map((player, index) => <AnimatedContainer key={player.id} delay={150 + index * 50} className="bg-secondary p-3 rounded-lg text-center">
                   <span className="font-medium">{player.name}</span>
