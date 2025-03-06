@@ -21,11 +21,13 @@ const Timer: React.FC<TimerProps> = ({
   const [tickPlayed, setTickPlayed] = useState<{[key: number]: boolean}>({});
   const tickSoundRef = useRef<HTMLAudioElement | null>(null);
   const timeUpSoundRef = useRef<HTMLAudioElement | null>(null);
+  const startSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     // Create audio elements
     tickSoundRef.current = new Audio('/tick.mp3');
     timeUpSoundRef.current = new Audio('/time-up.mp3');
+    startSoundRef.current = new Audio('/timer-start.mp3');
 
     return () => {
       // Clean up audio elements
@@ -36,6 +38,10 @@ const Timer: React.FC<TimerProps> = ({
       if (timeUpSoundRef.current) {
         timeUpSoundRef.current.pause();
         timeUpSoundRef.current = null;
+      }
+      if (startSoundRef.current) {
+        startSoundRef.current.pause();
+        startSoundRef.current = null;
       }
     };
   }, []);
@@ -50,10 +56,18 @@ const Timer: React.FC<TimerProps> = ({
 
   useEffect(() => {
     setSecondsLeft(duration);
+    setTickPlayed({});
   }, [duration]);
 
   useEffect(() => {
     if (!isActive) return;
+
+    // Play start sound when timer becomes active
+    if (startSoundRef.current && secondsLeft === duration) {
+      startSoundRef.current.play().catch(err => {
+        console.log("Error playing start sound:", err);
+      });
+    }
 
     const timer = setInterval(() => {
       setSecondsLeft((prevSeconds) => {
@@ -86,7 +100,7 @@ const Timer: React.FC<TimerProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isActive, duration, onTimeUp, tickPlayed]);
+  }, [isActive, duration, onTimeUp, tickPlayed, secondsLeft]);
 
   const getTimerSize = () => {
     switch (size) {

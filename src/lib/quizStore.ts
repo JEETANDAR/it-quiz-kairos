@@ -31,6 +31,7 @@ export interface Player {
   name: string;
   answers: PlayerAnswer[];
   totalPoints: number;
+  approved?: boolean; // New field to track player approval
 }
 
 export interface GameSession {
@@ -42,7 +43,7 @@ export interface GameSession {
   startTime?: number;
 }
 
-// Sample data
+// Additional sample quiz data
 const sampleQuizzes: Quiz[] = [
   {
     id: "quiz1",
@@ -91,6 +92,71 @@ const sampleQuizzes: Quiz[] = [
         options: ["Brain", "Liver", "Skin", "Heart"],
         correctOptionIndex: 2,
         timeLimit: 20,
+        points: 1000
+      }
+    ]
+  },
+  {
+    id: "quiz3",
+    title: "Technology Trivia",
+    description: "Test your tech knowledge!",
+    createdAt: Date.now() - 86400000 * 2,
+    questions: [
+      {
+        question: "Who co-founded Microsoft with Bill Gates?",
+        options: ["Steve Jobs", "Paul Allen", "Steve Wozniak", "Mark Zuckerberg"],
+        correctOptionIndex: 1,
+        timeLimit: 20,
+        points: 1000
+      },
+      {
+        question: "What programming language was used to create the first version of Facebook?",
+        options: ["Java", "C++", "Python", "PHP"],
+        correctOptionIndex: 3,
+        timeLimit: 20,
+        points: 1000
+      },
+      {
+        question: "What year was the first iPhone released?",
+        options: ["2005", "2007", "2009", "2010"],
+        correctOptionIndex: 1,
+        timeLimit: 15,
+        points: 1000
+      },
+      {
+        question: "What does CPU stand for?",
+        options: ["Central Processing Unit", "Computer Personal Unit", "Central Program Utility", "Core Processing Unit"],
+        correctOptionIndex: 0,
+        timeLimit: 15,
+        points: 1000
+      }
+    ]
+  },
+  {
+    id: "quiz4",
+    title: "Sports Champions",
+    description: "For sports enthusiasts!",
+    createdAt: Date.now() - 86400000 * 3,
+    questions: [
+      {
+        question: "Which country has won the most FIFA World Cups?",
+        options: ["Germany", "Italy", "Argentina", "Brazil"],
+        correctOptionIndex: 3,
+        timeLimit: 20,
+        points: 1000
+      },
+      {
+        question: "In which sport would you perform a slam dunk?",
+        options: ["Tennis", "Basketball", "Football", "Swimming"],
+        correctOptionIndex: 1,
+        timeLimit: 15,
+        points: 1000
+      },
+      {
+        question: "How many players are there in a standard cricket team?",
+        options: ["9", "10", "11", "12"],
+        correctOptionIndex: 2,
+        timeLimit: 15,
         points: 1000
       }
     ]
@@ -186,13 +252,34 @@ export const joinGame = (gameId: string, playerName: string): Player | null => {
     id: playerId,
     name: playerName,
     answers: [],
-    totalPoints: 0
+    totalPoints: 0,
+    approved: false // Players start as unapproved
   };
   
   sessions[sessionIndex].players.push(player);
   localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));
   
   return player;
+};
+
+export const approvePlayer = (gameId: string, playerId: string): boolean => {
+  const sessions = getGameSessions();
+  const sessionIndex = sessions.findIndex(session => session.id === gameId);
+  
+  if (sessionIndex === -1) {
+    return false;
+  }
+  
+  const playerIndex = sessions[sessionIndex].players.findIndex(p => p.id === playerId);
+  
+  if (playerIndex === -1) {
+    return false;
+  }
+  
+  sessions[sessionIndex].players[playerIndex].approved = true;
+  localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));
+  
+  return true;
 };
 
 export const startGame = (gameId: string): GameSession | null => {
@@ -202,6 +289,10 @@ export const startGame = (gameId: string): GameSession | null => {
   if (sessionIndex === -1 || sessions[sessionIndex].status !== "waiting") {
     return null;
   }
+  
+  // Filter out unapproved players
+  const approvedPlayers = sessions[sessionIndex].players.filter(p => p.approved);
+  sessions[sessionIndex].players = approvedPlayers;
   
   sessions[sessionIndex].status = "active";
   sessions[sessionIndex].currentQuestionIndex = 0;
