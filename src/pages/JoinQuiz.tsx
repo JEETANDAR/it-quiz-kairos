@@ -25,8 +25,8 @@ const JoinQuiz = () => {
 
     if (!playerName.trim()) {
       toast({
-        title: "Missing team name",
-        description: "Please enter your team name to join",
+        title: "Missing name",
+        description: "Please enter your name to join",
         variant: "destructive"
       });
       return;
@@ -80,11 +80,11 @@ const JoinQuiz = () => {
 
       toast({
         title: "Joined successfully",
-        description: "You've joined the game. Waiting for host approval."
+        description: "You've joined the game. Waiting for host to start."
       });
 
-      // Navigate to player lobby
-      navigate(`/play/lobby/${gameId}`);
+      // Navigate to player waiting room
+      navigate(`/play/${gameId}`);
     } catch (error) {
       toast({
         title: "Error joining game",
@@ -111,7 +111,7 @@ const JoinQuiz = () => {
             </Button>
             
             <h1 className="text-3xl font-bold mb-2">Join a Quiz</h1>
-            <p className="text-gray-600">Enter the game code and your team name to join</p>
+            <p className="text-gray-600">Enter the game code and your name to join</p>
           </div>
 
           <div className="space-y-6">
@@ -124,7 +124,7 @@ const JoinQuiz = () => {
                 id="gameId"
                 value={gameId}
                 onChange={(e) => setGameId(e.target.value)}
-                className="w-full px-4 py-3 text-center text-lg tracking-wider border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-black text-white"
+                className="w-full px-4 py-3 text-center text-lg tracking-wider border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter game code"
                 maxLength={7}
               />
@@ -132,15 +132,15 @@ const JoinQuiz = () => {
 
             <div>
               <label htmlFor="playerName" className="block text-sm font-medium text-gray-700 mb-1">
-                Team Name
+                Your Name
               </label>
               <input
                 type="text"
                 id="playerName"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-black text-white"
-                placeholder="Enter your team name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Enter your name"
                 maxLength={20}
               />
             </div>
