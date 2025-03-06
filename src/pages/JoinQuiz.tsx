@@ -86,7 +86,7 @@ const JoinQuiz = () => {
       setIsJoining(false);
     }
   };
-  return <div className="min-h-screen animated-bg flex items-center justify-center">
+  return <div className="min-h-screen animated-bg flex items-center justify-center bg-slate-800">
       <div className="w-full max-w-md px-4">
         <AnimatedContainer animation="scale-in" className="glass rounded-xl p-8 shadow-lg">
           <div className="text-center mb-8">
