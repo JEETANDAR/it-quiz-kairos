@@ -206,3 +206,18 @@ label, .text-gray-700 {
   @apply text-white/80;
 }
 
+/* Make sure all form inputs have black text */
+input, textarea, select {
+  @apply text-black;
+}
+
+/* Keep specific form labels white when they're inside the animated background */
+.min-h-screen.animated-bg label {
+  @apply text-white/80;
+}
+
+/* All other form labels remain black for better contrast */
+label:not(.min-h-screen.animated-bg label) {
+  @apply text-gray-700;
+}
+
