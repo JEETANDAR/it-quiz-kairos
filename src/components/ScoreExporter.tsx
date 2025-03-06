@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Download } from "lucide-react";
+import { FileSpreadsheet } from "lucide-react";
 import Button from "./Button";
 import { Player } from "@/lib/quizStore";
 
@@ -10,9 +10,9 @@ interface ScoreExporterProps {
 }
 
 const ScoreExporter: React.FC<ScoreExporterProps> = ({ players, quizTitle }) => {
-  const downloadCSV = () => {
+  const downloadExcel = () => {
     // Create CSV header
-    const headers = ["Rank", "Name", "Score", "Correct Answers", "Total Questions"];
+    const headers = ["Rank", "Team Name", "Score", "Correct Answers", "Total Questions"];
     
     // Sort players by score
     const sortedPlayers = [...players].sort((a, b) => b.totalPoints - a.totalPoints);
@@ -59,11 +59,11 @@ const ScoreExporter: React.FC<ScoreExporterProps> = ({ players, quizTitle }) => 
 
   return (
     <Button 
-      onClick={downloadCSV} 
+      onClick={downloadExcel} 
       className="flex items-center gap-2"
       variant="primary"
     >
-      <Download size={18} />
+      <FileSpreadsheet size={18} />
       <span>Download Scores</span>
     </Button>
   );

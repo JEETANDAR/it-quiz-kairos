@@ -18,7 +18,7 @@ import {
   Question
 } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Users, Award, Check, Download } from "lucide-react";
+import { Trophy, Users, Award, Check } from "lucide-react";
 
 enum HostView {
   LOBBY,
