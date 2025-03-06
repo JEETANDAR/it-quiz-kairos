@@ -175,3 +175,28 @@
   50% { transform: scale(1.2); }
   100% { transform: scale(1); }
 }
+
+/* Added for dark mode input text color fix */
+input, textarea {
+  @apply text-black;
+}
+
+/* Fix for white text on white background */
+.bg-white, .bg-card {
+  @apply text-black;
+}
+
+/* Form labels color fix */
+label, .text-gray-700 {
+  @apply text-black;
+}
+
+/* Caption text color fix */
+.text-gray-500, .text-gray-600 {
+  @apply text-gray-700;
+}
+
+/* Make sure placeholders are visible */
+::placeholder {
+  @apply text-gray-500;
+}
