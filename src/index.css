@@ -200,3 +200,9 @@ label, .text-gray-700 {
 ::placeholder {
   @apply text-gray-500;
 }
+
+/* Home page specific styles - keep text white */
+.min-h-screen.animated-bg .text-gray-600 {
+  @apply text-white/80;
+}
+

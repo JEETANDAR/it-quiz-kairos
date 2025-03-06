@@ -19,7 +19,7 @@ const Index = () => {
               Quizzy
             </span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto">
             Create and play interactive quizzes in real-time.
           </p>
         </AnimatedContainer>
@@ -37,8 +37,8 @@ const Index = () => {
               <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-800">
                 <PlusCircle className="h-8 w-8" />
               </div>
-              <h2 className="text-2xl font-semibold mb-3">Create a Quiz</h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="text-2xl font-semibold mb-3 text-white">Create a Quiz</h2>
+              <p className="text-white/80 mb-6">
                 Build your own quiz with custom questions and share it with others.
               </p>
               <Button 
@@ -63,8 +63,8 @@ const Index = () => {
               <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-800">
                 <Zap className="h-8 w-8" />
               </div>
-              <h2 className="text-2xl font-semibold mb-3">Join a Quiz</h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="text-2xl font-semibold mb-3 text-white">Join a Quiz</h2>
+              <p className="text-white/80 mb-6">
                 Enter a game code to join an existing quiz session.
               </p>
               <Button 
@@ -81,7 +81,7 @@ const Index = () => {
 
         <AnimatedContainer delay={400} className="text-center mt-16">
           <div className="glass rounded-xl p-6 inline-block">
-            <p className="text-gray-600 mb-3">
+            <p className="text-white/80 mb-3">
               Already have a quiz?
             </p>
             <Button 
