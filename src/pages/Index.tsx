@@ -16,11 +16,11 @@ const Index = () => {
         <AnimatedContainer animation="slide-down" className="text-center mb-16">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
-              Quizzy
+              IT Quiz
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto">
-            Create and play interactive IT quizzes in real-time.
+            Participate in an interactive IT knowledge quiz
           </p>
         </AnimatedContainer>
 
@@ -37,9 +37,9 @@ const Index = () => {
               <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-purple-100 text-purple-800">
                 <Users className="h-8 w-8" />
               </div>
-              <h2 className="text-2xl font-semibold mb-3 text-white">IT Quiz Participant</h2>
+              <h2 className="text-2xl font-semibold mb-3 text-white">Join as Participant</h2>
               <p className="text-white/80 mb-6">
-                Direct access for IT quiz participants. Enter your team name to join.
+                Enter your team name to join the IT quiz and test your knowledge.
               </p>
               <Button 
                 size="lg" 
@@ -47,7 +47,7 @@ const Index = () => {
                 onClick={() => navigate("/itquizparticipant")}
                 fullWidth
               >
-                Join as Participant
+                Join Quiz
               </Button>
             </div>
           </AnimatedContainer>
@@ -64,9 +64,9 @@ const Index = () => {
               <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 text-orange-800">
                 <Award className="h-8 w-8" />
               </div>
-              <h2 className="text-2xl font-semibold mb-3 text-white">IT Quiz Host</h2>
+              <h2 className="text-2xl font-semibold mb-3 text-white">Host IT Quiz</h2>
               <p className="text-white/80 mb-6">
-                Host access for IT quiz. Monitor participants and start when ready.
+                Start an IT quiz session and monitor participants in real-time.
               </p>
               <Button 
                 size="lg" 
@@ -74,7 +74,7 @@ const Index = () => {
                 onClick={() => navigate("/itquizhost")}
                 fullWidth
               >
-                Host IT Quiz
+                Host Quiz
               </Button>
             </div>
           </AnimatedContainer>

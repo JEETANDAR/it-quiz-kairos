@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -43,20 +44,20 @@ const PlayerQuiz = () => {
 
   useEffect(() => {
     if (!gameId) {
-      navigate("/join");
+      navigate("/");
       return;
     }
 
     const playerString = sessionStorage.getItem("currentPlayer");
     if (!playerString) {
-      navigate("/join");
+      navigate("/");
       return;
     }
 
     try {
       const player = JSON.parse(playerString);
       if (player.gameId !== gameId) {
-        navigate("/join");
+        navigate("/");
         return;
       }
       
@@ -69,7 +70,7 @@ const PlayerQuiz = () => {
           description: "The game you're trying to join doesn't exist anymore",
           variant: "destructive"
         });
-        navigate("/join");
+        navigate("/");
         return;
       }
       
@@ -82,7 +83,7 @@ const PlayerQuiz = () => {
           description: "Could not load the quiz data",
           variant: "destructive"
         });
-        navigate("/join");
+        navigate("/");
         return;
       }
       
@@ -100,19 +101,24 @@ const PlayerQuiz = () => {
           if (hasAnsweredCurrent) {
             setPlayerView(PlayerView.ANSWER_SUBMITTED);
           } else {
-            setCurrentQuestion(quizData.questions[session.currentQuestionIndex]);
+            // Use selectedQuestions if available
+            if (session.selectedQuestions && session.selectedQuestions.length > 0) {
+              setCurrentQuestion(session.selectedQuestions[session.currentQuestionIndex]);
+            } else {
+              setCurrentQuestion(quizData.questions[session.currentQuestionIndex]);
+            }
             setPlayerView(PlayerView.QUESTION);
             setAnswerTime(Date.now());
           }
         } else {
-          navigate("/join");
+          navigate("/");
         }
       } else if (session.status === "finished") {
         setPlayerView(PlayerView.FINAL_RESULTS);
       }
     } catch (error) {
       console.error("Error loading player session:", error);
-      navigate("/join");
+      navigate("/");
     }
   }, [gameId, navigate, toast]);
 
@@ -129,7 +135,7 @@ const PlayerQuiz = () => {
           description: "The host has ended the game session",
         });
         sessionStorage.removeItem("currentPlayer");
-        navigate("/join");
+        navigate("/");
         return;
       }
       
@@ -137,22 +143,28 @@ const PlayerQuiz = () => {
         setGameSession(updatedSession);
         
         if (updatedSession.status === "active" && playerView === PlayerView.WAITING) {
-          if (quiz) {
+          // Use selectedQuestions if available
+          if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
+            setCurrentQuestion(updatedSession.selectedQuestions[updatedSession.currentQuestionIndex]);
+          } else if (quiz) {
             setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
-            setPlayerView(PlayerView.QUESTION);
-            setAnswerTime(Date.now());
-            setSelectedAnswer(null);
           }
+          setPlayerView(PlayerView.QUESTION);
+          setAnswerTime(Date.now());
+          setSelectedAnswer(null);
         } else if (updatedSession.status === "active" && 
                   gameSession?.currentQuestionIndex !== updatedSession.currentQuestionIndex) {
-          if (quiz) {
+          // Use selectedQuestions if available
+          if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
+            setCurrentQuestion(updatedSession.selectedQuestions[updatedSession.currentQuestionIndex]);
+          } else if (quiz) {
             setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
-            setPlayerView(PlayerView.QUESTION);
-            setAnswerTime(Date.now());
-            setSelectedAnswer(null);
-            setAnswerCorrect(null);
-            setPointsEarned(0);
           }
+          setPlayerView(PlayerView.QUESTION);
+          setAnswerTime(Date.now());
+          setSelectedAnswer(null);
+          setAnswerCorrect(null);
+          setPointsEarned(0);
         } else if (updatedSession.status === "finished" && gameSession?.status !== "finished") {
           setPlayerView(PlayerView.FINAL_RESULTS);
         }
@@ -245,20 +257,17 @@ const PlayerQuiz = () => {
     return (
       <div className="max-w-md mx-auto">
         <AnimatedContainer className="glass rounded-xl p-6 mb-6 text-center">
-          <h2 className="text-xl font-semibold mb-4">Waiting for host to start</h2>
+          <h2 className="text-xl font-semibold mb-4 text-white">Waiting for host to start</h2>
           <div className="flex justify-center items-center py-8">
             <HourglassIcon className="h-12 w-12 text-blue-500 animate-pulse-soft" />
           </div>
-          <p className="text-gray-600 mb-1">
-            Game code: <span className="font-semibold">{gameSession.id}</span>
-          </p>
-          <p className="text-gray-600">
+          <p className="text-gray-300 mb-1">
             Players in lobby: <span className="font-semibold">{playerCount}</span>
           </p>
         </AnimatedContainer>
         
         <AnimatedContainer delay={100} className="text-center">
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-300 mb-4">
             Playing as <span className="font-semibold">{currentPlayer.playerName}</span>
           </p>
           <Button variant="outline" onClick={handleLeaveGame}>

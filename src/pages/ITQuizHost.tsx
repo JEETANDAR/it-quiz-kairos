@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
-import { createGameSession, getGameSessionById } from "@/lib/quizStore";
+import { getGameSessionById, createGameSession } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
 import { Users } from "lucide-react";
 
@@ -102,16 +102,6 @@ const ITQuizHost = () => {
         </AnimatedContainer>
 
         <div className="max-w-2xl mx-auto">
-          <AnimatedContainer className="glass rounded-xl p-6 mb-6 text-center">
-            <h2 className="text-xl font-semibold mb-4 text-white">Quiz Access Code</h2>
-            <div className="text-4xl font-bold tracking-widest bg-secondary py-3 px-6 rounded-lg mb-4 text-white">
-              {gameSession?.id || "Loading..."}
-            </div>
-            <p className="text-gray-300">
-              Participants can join using either this code via the direct IT quiz participation page
-            </p>
-          </AnimatedContainer>
-
           <AnimatedContainer delay={100} className="glass rounded-xl p-6 mb-6">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">

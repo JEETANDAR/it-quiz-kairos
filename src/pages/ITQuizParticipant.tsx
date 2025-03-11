@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
-import { joinGame, getGameSessionById, createGameSession } from "@/lib/quizStore";
+import { joinGame } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
 
 const ITQuizParticipant = () => {
@@ -11,38 +11,7 @@ const ITQuizParticipant = () => {
   const { toast } = useToast();
   const [playerName, setPlayerName] = useState("");
   const [isJoining, setIsJoining] = useState(false);
-  const [gameSession, setGameSession] = useState(null);
   
-  // Create or fetch the IT quiz session on component mount
-  useEffect(() => {
-    // We use a fixed gameId for the IT quiz
-    const gameId = "ITQUIZ";
-    const existingSession = getGameSessionById(gameId);
-    
-    if (existingSession) {
-      setGameSession(existingSession);
-    } else {
-      // Create a new session using a fixed quiz ID 
-      // (you may want to replace this with your actual IT quiz ID)
-      const itQuizId = "itquiz123"; 
-      const newSession = createGameSession(itQuizId);
-      
-      // We need to manually set the id since createGameSession generates a random one
-      newSession.id = gameId;
-      // Update the session in localStorage
-      const sessions = JSON.parse(localStorage.getItem("kahoot_clone_sessions") || "[]");
-      const sessionIndex = sessions.findIndex(s => s.id === newSession.id);
-      if (sessionIndex !== -1) {
-        sessions[sessionIndex] = newSession;
-      } else {
-        sessions.push(newSession);
-      }
-      localStorage.setItem("kahoot_clone_sessions", JSON.stringify(sessions));
-      
-      setGameSession(newSession);
-    }
-  }, []);
-
   const handleJoinQuiz = () => {
     if (!playerName.trim()) {
       toast({
@@ -53,18 +22,10 @@ const ITQuizParticipant = () => {
       return;
     }
 
-    if (!gameSession) {
-      toast({
-        title: "Session not available",
-        description: "The quiz session is not available yet. Please try again.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsJoining(true);
     try {
-      const gameId = gameSession.id;
+      // Fixed gameId for the IT quiz
+      const gameId = "ITQUIZ";
       
       // Join the game
       const player = joinGame(gameId, playerName);
@@ -107,7 +68,7 @@ const ITQuizParticipant = () => {
       <div className="w-full max-w-md px-4">
         <AnimatedContainer animation="scale-in" className="glass rounded-xl p-8 shadow-lg">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">IT Quiz Participant</h1>
+            <h1 className="text-3xl font-bold mb-2 text-white">IT Quiz Participant</h1>
             <p className="text-gray-300">Enter your team name to join the IT quiz</p>
           </div>
 
