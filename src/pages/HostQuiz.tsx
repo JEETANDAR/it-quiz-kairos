@@ -9,33 +9,31 @@ import { cn } from "@/lib/utils";
 import { getQuizById, getGameSessionById, createGameSession, startGame, advanceQuestion, endGame, Quiz, GameSession, Question } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Users, Award, Check } from "lucide-react";
+
 enum HostView {
   LOBBY,
   QUESTION,
   QUESTION_RESULTS,
   FINAL_RESULTS,
 }
+
 const HostQuiz = () => {
-  const {
-    quizId
-  } = useParams<{
-    quizId: string;
-  }>();
+  const { quizId } = useParams<{ quizId: string; }>();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [hostView, setHostView] = useState<HostView>(HostView.LOBBY);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [gameSession, setGameSession] = useState<GameSession | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [lobbyRefreshInterval, setLobbyRefreshInterval] = useState<number | null>(null);
   const [timerActive, setTimerActive] = useState(false);
+  
   useEffect(() => {
     if (!quizId) {
-      navigate("/my-quizzes");
+      navigate("/");
       return;
     }
+    
     const fetchQuiz = () => {
       const loadedQuiz = getQuizById(quizId);
       if (!loadedQuiz) {
@@ -44,11 +42,12 @@ const HostQuiz = () => {
           description: "The quiz you're trying to host doesn't exist",
           variant: "destructive"
         });
-        navigate("/my-quizzes");
+        navigate("/");
         return;
       }
       setQuiz(loadedQuiz);
     };
+    
     const initializeGameSession = () => {
       const sessionString = sessionStorage.getItem("hostSession");
       if (sessionString) {
@@ -62,8 +61,13 @@ const HostQuiz = () => {
                 setHostView(HostView.LOBBY);
               } else if (currentSession.status === "active") {
                 setHostView(HostView.QUESTION);
-                const currentQ = quiz?.questions[currentSession.currentQuestionIndex];
-                if (currentQ) setCurrentQuestion(currentQ);
+                // Get current question from selectedQuestions if available
+                if (currentSession.selectedQuestions && currentSession.selectedQuestions[currentSession.currentQuestionIndex]) {
+                  setCurrentQuestion(currentSession.selectedQuestions[currentSession.currentQuestionIndex]);
+                } else {
+                  const currentQ = quiz?.questions[currentSession.currentQuestionIndex];
+                  if (currentQ) setCurrentQuestion(currentQ);
+                }
               } else if (currentSession.status === "finished") {
                 setHostView(HostView.FINAL_RESULTS);
               }
@@ -74,6 +78,7 @@ const HostQuiz = () => {
           console.error("Error parsing saved session:", error);
         }
       }
+      
       const newSession = createGameSession(quizId);
       setGameSession(newSession);
       sessionStorage.setItem("hostSession", JSON.stringify({
@@ -81,9 +86,11 @@ const HostQuiz = () => {
         quizId
       }));
     };
+    
     fetchQuiz();
     initializeGameSession();
   }, [quizId, navigate, toast]);
+  
   useEffect(() => {
     if (hostView === HostView.LOBBY && gameSession) {
       const interval = window.setInterval(() => {
@@ -101,8 +108,10 @@ const HostQuiz = () => {
       setLobbyRefreshInterval(null);
     }
   }, [hostView, gameSession]);
+  
   const handleStartGame = () => {
     if (!gameSession) return;
+    
     if (gameSession.players.length === 0) {
       toast({
         title: "No players",
@@ -111,28 +120,41 @@ const HostQuiz = () => {
       });
       return;
     }
+    
     const startSound = new Audio('/start-game.mp3');
     startSound.play().catch(() => {
       console.log("Audio playback prevented - user hasn't interacted with the document yet");
     });
+    
     const updatedSession = startGame(gameSession.id);
     if (updatedSession) {
       setGameSession(updatedSession);
-      const firstQuestion = quiz?.questions[0];
-      if (firstQuestion) {
-        setCurrentQuestion(firstQuestion);
-        setHostView(HostView.QUESTION);
-        setTimerActive(true);
+      
+      // Set the first question from selectedQuestions if available
+      if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
+        setCurrentQuestion(updatedSession.selectedQuestions[0]);
+      } else {
+        const firstQuestion = quiz?.questions[0];
+        if (firstQuestion) {
+          setCurrentQuestion(firstQuestion);
+        }
       }
+      
+      setHostView(HostView.QUESTION);
+      setTimerActive(true);
     }
   };
+  
   const handleNextQuestion = () => {
     if (!gameSession) return;
+    
     const nextSound = new Audio('/next-question.mp3');
     nextSound.play().catch(() => {
       console.log("Audio playback prevented - user hasn't interacted with the document yet");
     });
+    
     const nextQuestionIndex = advanceQuestion(gameSession.id);
+    
     if (nextQuestionIndex === null) {
       toast({
         title: "Error",
@@ -141,11 +163,13 @@ const HostQuiz = () => {
       });
       return;
     }
+    
     if (nextQuestionIndex === -1) {
       const endSound = new Audio('/end-game.mp3');
       endSound.play().catch(() => {
         console.log("Audio playback prevented - user hasn't interacted with the document yet");
       });
+      
       const finalSession = getGameSessionById(gameSession.id);
       if (finalSession) {
         setGameSession(finalSession);
@@ -153,31 +177,45 @@ const HostQuiz = () => {
       }
       return;
     }
-    const nextQuestion = quiz?.questions[nextQuestionIndex];
+    
+    // Get the next question from selectedQuestions if available
+    let nextQuestion = null;
+    if (gameSession.selectedQuestions && gameSession.selectedQuestions[nextQuestionIndex]) {
+      nextQuestion = gameSession.selectedQuestions[nextQuestionIndex];
+    } else if (quiz) {
+      nextQuestion = quiz.questions[nextQuestionIndex];
+    }
+    
     if (nextQuestion) {
       setCurrentQuestion(nextQuestion);
       setHostView(HostView.QUESTION);
       setTimerActive(true);
+      
       const updatedSession = getGameSessionById(gameSession.id);
       if (updatedSession) {
         setGameSession(updatedSession);
       }
     }
   };
+  
   const handleTimeUp = () => {
     const timeUpSound = new Audio('/time-up.mp3');
     timeUpSound.play().catch(err => {
       console.log("Error playing time-up sound:", err);
     });
+    
     setTimerActive(false);
     setHostView(HostView.QUESTION_RESULTS);
   };
+  
   const handleEndGame = () => {
     if (!gameSession) return;
+    
     endGame(gameSession.id);
     sessionStorage.removeItem("hostSession");
-    navigate("/my-quizzes");
+    navigate("/");
   };
+  
   const renderView = () => {
     switch (hostView) {
       case HostView.LOBBY:
@@ -223,7 +261,7 @@ const HostQuiz = () => {
         </AnimatedContainer>
 
         <AnimatedContainer delay={200} className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate("/my-quizzes")}>
+          <Button variant="outline" onClick={() => navigate("/")}>
             Cancel
           </Button>
         </AnimatedContainer>
@@ -250,15 +288,21 @@ const HostQuiz = () => {
   };
   const renderQuestionResults = () => {
     if (!currentQuestion || !gameSession) return null;
-    const playerAnswers = gameSession.players.flatMap(player => player.answers.filter(a => a.questionIndex === gameSession.currentQuestionIndex));
+    
+    const playerAnswers = gameSession.players.flatMap(player => 
+      player.answers.filter(a => a.questionIndex === gameSession.currentQuestionIndex)
+    );
+    
     const totalResponses = playerAnswers.length;
     const correctResponses = playerAnswers.filter(a => a.correct).length;
+    
     const answerCounts = [0, 0, 0, 0];
     playerAnswers.forEach(answer => {
       if (answer.answerIndex >= 0 && answer.answerIndex < 4) {
         answerCounts[answer.answerIndex]++;
       }
     });
+    
     const playersWithPointsThisQuestion = gameSession.players.map(player => {
       const answer = player.answers.find(a => a.questionIndex === gameSession.currentQuestionIndex);
       return {
@@ -267,7 +311,9 @@ const HostQuiz = () => {
         isCorrect: answer?.correct || false
       };
     }).sort((a, b) => b.pointsThisQuestion - a.pointsThisQuestion);
-    return <div className="max-w-4xl mx-auto">
+    
+    return (
+      <div className="max-w-4xl mx-auto">
         <AnimatedContainer className="glass rounded-xl p-6 mb-8 text-center">
           <h2 className="text-2xl font-semibold mb-4 text-high-contrast">Question Results</h2>
           <div className="flex justify-center gap-8 mb-6">
@@ -284,7 +330,13 @@ const HostQuiz = () => {
           </div>
         </AnimatedContainer>
         
-        <QuestionCard question={currentQuestion} onAnswer={() => {}} answered={true} correctAnswer={currentQuestion.correctOptionIndex} isHost={true} />
+        <QuestionCard 
+          question={currentQuestion} 
+          onAnswer={() => {}} 
+          answered={true} 
+          correctAnswer={currentQuestion.correctOptionIndex} 
+          isHost={true} 
+        />
         
         <AnimatedContainer delay={200} className="glass rounded-xl p-6 my-8">
           <div className="flex items-center justify-between mb-4">
@@ -332,26 +384,34 @@ const HostQuiz = () => {
         
         <AnimatedContainer delay={300} className="mt-8 flex justify-end">
           <Button onClick={handleNextQuestion} className="interactive-btn">
-            {gameSession.currentQuestionIndex < (quiz?.questions.length || 0) - 1 ? "Next Question" : "See Final Results"}
+            {gameSession.currentQuestionIndex < ((gameSession.selectedQuestions?.length || quiz?.questions.length || 0) - 1) 
+              ? "Next Question" 
+              : "See Final Results"}
           </Button>
         </AnimatedContainer>
-      </div>;
+      </div>
+    );
   };
+  
   const renderFinalResults = () => {
     if (!gameSession) return null;
+    
     const sortedPlayers = [...gameSession.players].sort((a, b) => b.totalPoints - a.totalPoints);
-    return <div className="max-w-3xl mx-auto">
+    const questionCount = gameSession.selectedQuestions?.length || quiz?.questions.length || 0;
+    
+    return (
+      <div className="max-w-3xl mx-auto">
         <AnimatedContainer className="glass rounded-xl p-6 mb-8 text-center">
           <div className="flex justify-center mb-4">
             <Award className="h-12 w-12 text-quiz-yellow" />
           </div>
           <h2 className="text-3xl font-bold mb-2 text-high-contrast">Final Results</h2>
           <p className="text-muted-foreground mb-6">
-            {quiz?.title} • {quiz?.questions.length} questions
+            {quiz?.title} • {questionCount} questions
           </p>
           
           <div className="flex justify-center mb-6">
-            <ScoreExporter players={gameSession.players} quizTitle={quiz?.title || 'Quiz'} />
+            <ScoreExporter players={gameSession.players} quizTitle={quiz?.title || 'IT Quiz'} />
           </div>
           
           {sortedPlayers.length === 0 ? <p className="text-gray-500 py-8">No players in this game</p> : <div className="space-y-4">
@@ -376,28 +436,38 @@ const HostQuiz = () => {
             End Game
           </Button>
         </AnimatedContainer>
-      </div>;
+      </div>
+    );
   };
+  
   if (!quiz || !gameSession) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="glass rounded-xl p-6 animate-pulse-soft">
           <p className="text-lg text-high-contrast">Loading quiz...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-background py-12">
+  
+  return (
+    <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4">
         <AnimatedContainer className="text-center mb-10">
           <h1 className="text-3xl font-bold mb-2 text-high-contrast">
-            {quiz?.title || "Quiz Game"}
+            {quiz?.title || "IT Quiz"}
           </h1>
-          {hostView === HostView.LOBBY && <p className="text-muted-foreground">
+          {hostView === HostView.LOBBY && 
+            <p className="text-muted-foreground">
               Waiting for players to join
-            </p>}
+            </p>
+          }
         </AnimatedContainer>
         
         {renderView()}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default HostQuiz;

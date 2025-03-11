@@ -21,7 +21,6 @@ const ITQuizHost = () => {
     
     if (!session) {
       // Create a new session using a fixed quiz ID
-      // (you may want to replace this with your actual IT quiz ID)
       const itQuizId = "itquiz123"; 
       session = createGameSession(itQuizId);
       
@@ -109,8 +108,7 @@ const ITQuizHost = () => {
               {gameSession?.id || "Loading..."}
             </div>
             <p className="text-gray-300">
-              Participants can join using either this code via the regular join page 
-              or by using the direct IT quiz participation page
+              Participants can join using either this code via the direct IT quiz participation page
             </p>
           </AnimatedContainer>
 
@@ -151,10 +149,9 @@ const ITQuizHost = () => {
           <AnimatedContainer delay={200} className="flex justify-center">
             <Button 
               variant="outline" 
-              onClick={() => navigate("/my-quizzes")}
-              className="mr-2"
+              onClick={() => navigate("/")}
             >
-              Back to My Quizzes
+              Back to Home
             </Button>
           </AnimatedContainer>
         </div>
