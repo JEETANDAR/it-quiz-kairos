@@ -11,6 +11,8 @@ import JoinQuiz from "./pages/JoinQuiz";
 import MyQuizzes from "./pages/MyQuizzes";
 import HostQuiz from "./pages/HostQuiz";
 import PlayerQuiz from "./pages/PlayerQuiz";
+import ITQuizParticipant from "./pages/ITQuizParticipant";
+import ITQuizHost from "./pages/ITQuizHost";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,8 @@ const App = () => (
           <Route path="/my-quizzes" element={<MyQuizzes />} />
           <Route path="/host/:quizId" element={<HostQuiz />} />
           <Route path="/play/:gameId" element={<PlayerQuiz />} />
+          <Route path="/itquizparticipant" element={<ITQuizParticipant />} />
+          <Route path="/itquizhost" element={<ITQuizHost />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
