@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -65,9 +66,10 @@ const HostQuiz = () => {
                 if (currentSession.selectedQuestions && currentSession.selectedQuestions[currentSession.currentQuestionIndex]) {
                   setCurrentQuestion(currentSession.selectedQuestions[currentSession.currentQuestionIndex]);
                 } else {
-                  const currentQ = quiz?.questions[currentSession.currentQuestionIndex];
+                  const currentQ = loadedQuiz?.questions[currentSession.currentQuestionIndex];
                   if (currentQ) setCurrentQuestion(currentQ);
                 }
+                setTimerActive(true);
               } else if (currentSession.status === "finished") {
                 setHostView(HostView.FINAL_RESULTS);
               }
@@ -79,6 +81,7 @@ const HostQuiz = () => {
         }
       }
       
+      // Create a new session if none exists
       const newSession = createGameSession(quizId);
       setGameSession(newSession);
       sessionStorage.setItem("hostSession", JSON.stringify({

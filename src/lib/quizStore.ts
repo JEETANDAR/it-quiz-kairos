@@ -185,7 +185,20 @@ const selectRandomQuestions = (quiz: Quiz): Question[] => {
 export const getQuizzes = (): Quiz[] => {
   const storedQuizzes = localStorage.getItem(QUIZZES_KEY);
   if (storedQuizzes) {
-    return JSON.parse(storedQuizzes);
+    try {
+      const parsedQuizzes = JSON.parse(storedQuizzes);
+      // Make sure the IT quiz is always available
+      const hasITQuiz = parsedQuizzes.some((quiz: Quiz) => quiz.id === itQuiz.id);
+      if (!hasITQuiz) {
+        parsedQuizzes.push(itQuiz);
+        localStorage.setItem(QUIZZES_KEY, JSON.stringify(parsedQuizzes));
+      }
+      return parsedQuizzes;
+    } catch (error) {
+      console.error("Error parsing stored quizzes:", error);
+      localStorage.setItem(QUIZZES_KEY, JSON.stringify(sampleQuizzes));
+      return sampleQuizzes;
+    }
   }
   // Initialize with sample quizzes if empty
   localStorage.setItem(QUIZZES_KEY, JSON.stringify(sampleQuizzes));
@@ -205,6 +218,7 @@ export const saveQuiz = (quiz: Omit<Quiz, "id" | "createdAt">): Quiz => {
 };
 
 export const getQuizById = (id: string): Quiz | undefined => {
+  // Always fetch the latest quizzes from storage
   const quizzes = getQuizzes();
   return quizzes.find(quiz => quiz.id === id);
 };
@@ -214,7 +228,11 @@ export const createGameSession = (quizId: string): GameSession => {
   const gameId = generateId();
   
   const quiz = getQuizById(quizId);
-  const selectedQuestions = quiz ? selectRandomQuestions(quiz) : [];
+  if (!quiz) {
+    throw new Error(`Quiz with ID ${quizId} not found`);
+  }
+  
+  const selectedQuestions = selectRandomQuestions(quiz);
   
   const newSession: GameSession = {
     id: gameId,
@@ -234,7 +252,12 @@ export const createGameSession = (quizId: string): GameSession => {
 export const getGameSessions = (): GameSession[] => {
   const storedSessions = localStorage.getItem(GAME_SESSIONS_KEY);
   if (storedSessions) {
-    return JSON.parse(storedSessions);
+    try {
+      return JSON.parse(storedSessions);
+    } catch (error) {
+      console.error("Error parsing game sessions:", error);
+      return [];
+    }
   }
   return [];
 };

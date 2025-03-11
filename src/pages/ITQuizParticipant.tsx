@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
-import { joinGame } from "@/lib/quizStore";
+import { joinGame, getGameSessionById } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
 
 const ITQuizParticipant = () => {
@@ -26,6 +26,18 @@ const ITQuizParticipant = () => {
     try {
       // Fixed gameId for the IT quiz
       const gameId = "ITQUIZ";
+      
+      // Check if the game exists
+      const gameSession = getGameSessionById(gameId);
+      if (!gameSession) {
+        toast({
+          title: "Game not available",
+          description: "The IT Quiz hasn't been set up yet. Please try again later.",
+          variant: "destructive"
+        });
+        setIsJoining(false);
+        return;
+      }
       
       // Join the game
       const player = joinGame(gameId, playerName);
@@ -54,6 +66,7 @@ const ITQuizParticipant = () => {
       // Navigate to player waiting room
       navigate(`/play/${gameId}`);
     } catch (error) {
+      console.error("Error joining game:", error);
       toast({
         title: "Error joining game",
         description: "An unexpected error occurred",

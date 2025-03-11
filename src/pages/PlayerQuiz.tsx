@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -207,6 +206,7 @@ const PlayerQuiz = () => {
         console.log("Error playing sound:", err);
       });
       
+      // Show leaderboard after answer feedback
       setTimeout(() => {
         setPlayerView(PlayerView.LEADERBOARD);
       }, 1500);

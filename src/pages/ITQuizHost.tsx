@@ -3,15 +3,15 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
-import { getGameSessionById, createGameSession } from "@/lib/quizStore";
+import { getGameSessionById, createGameSession, getQuizById, GameSession } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
 import { Users } from "lucide-react";
 
 const ITQuizHost = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [gameSession, setGameSession] = useState(null);
-  const [refreshInterval, setRefreshInterval] = useState(null);
+  const [gameSession, setGameSession] = useState<GameSession | null>(null);
+  const [refreshInterval, setRefreshInterval] = useState<number | null>(null);
 
   // Create or fetch the IT quiz session on component mount
   useEffect(() => {
@@ -19,21 +19,36 @@ const ITQuizHost = () => {
     const gameId = "ITQUIZ";
     let session = getGameSessionById(gameId);
     
+    // Get the IT quiz ID
+    const itQuizId = "itquiz123";
+    const quiz = getQuizById(itQuizId);
+    
+    if (!quiz) {
+      toast({
+        title: "Quiz data error",
+        description: "The IT Quiz data couldn't be loaded",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!session) {
-      // Create a new session using a fixed quiz ID
-      const itQuizId = "itquiz123"; 
+      // Create a new session using the IT quiz ID
       session = createGameSession(itQuizId);
       
       // We need to manually set the id since createGameSession generates a random one
       session.id = gameId;
+      
       // Update the session in localStorage
       const sessions = JSON.parse(localStorage.getItem("kahoot_clone_sessions") || "[]");
-      const sessionIndex = sessions.findIndex(s => s.id === session.id);
+      const sessionIndex = sessions.findIndex((s: GameSession) => s.id === session?.id);
+      
       if (sessionIndex !== -1) {
         sessions[sessionIndex] = session;
       } else {
         sessions.push(session);
       }
+      
       localStorage.setItem("kahoot_clone_sessions", JSON.stringify(sessions));
     }
     
@@ -50,12 +65,12 @@ const ITQuizHost = () => {
         clearInterval(refreshInterval);
       }
     };
-  }, []);
+  }, [toast]);
 
   // Set up polling to refresh the player list
   useEffect(() => {
     if (gameSession) {
-      const interval = setInterval(() => {
+      const interval = window.setInterval(() => {
         const updatedSession = getGameSessionById(gameSession.id);
         if (updatedSession) {
           setGameSession(updatedSession);
