@@ -23,7 +23,19 @@ const ITQuizHost = () => {
       // Create a new session using a fixed quiz ID
       // (you may want to replace this with your actual IT quiz ID)
       const itQuizId = "itquiz123"; 
-      session = createGameSession(itQuizId, gameId);
+      session = createGameSession(itQuizId);
+      
+      // We need to manually set the id since createGameSession generates a random one
+      session.id = gameId;
+      // Update the session in localStorage
+      const sessions = JSON.parse(localStorage.getItem("kahoot_clone_sessions") || "[]");
+      const sessionIndex = sessions.findIndex(s => s.id === session.id);
+      if (sessionIndex !== -1) {
+        sessions[sessionIndex] = session;
+      } else {
+        sessions.push(session);
+      }
+      localStorage.setItem("kahoot_clone_sessions", JSON.stringify(sessions));
     }
     
     setGameSession(session);
