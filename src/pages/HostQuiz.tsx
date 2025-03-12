@@ -9,7 +9,7 @@ import ScoreExporter from "@/components/ScoreExporter";
 import { cn } from "@/lib/utils";
 import { getQuizById, getGameSessionById, createGameSession, startGame, advanceQuestion, endGame, Quiz, GameSession, Question } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Users, Award, Check } from "lucide-react";
+import { Trophy, Users, Award, Check, User } from "lucide-react";
 
 enum HostView {
   LOBBY,
@@ -66,8 +66,11 @@ const HostQuiz = () => {
                 if (currentSession.selectedQuestions && currentSession.selectedQuestions[currentSession.currentQuestionIndex]) {
                   setCurrentQuestion(currentSession.selectedQuestions[currentSession.currentQuestionIndex]);
                 } else {
-                  const currentQ = loadedQuiz?.questions[currentSession.currentQuestionIndex];
-                  if (currentQ) setCurrentQuestion(currentQ);
+                  const quiz = getQuizById(currentSession.quizId);
+                  if (quiz) {
+                    const currentQ = quiz.questions[currentSession.currentQuestionIndex];
+                    if (currentQ) setCurrentQuestion(currentQ);
+                  }
                 }
                 setTimerActive(true);
               } else if (currentSession.status === "finished") {
@@ -101,7 +104,7 @@ const HostQuiz = () => {
         if (updatedSession) {
           setGameSession(updatedSession);
         }
-      }, 2000);
+      }, 1000); // Refresh more frequently (every second)
       setLobbyRefreshInterval(interval);
       return () => {
         clearInterval(interval);
@@ -218,6 +221,15 @@ const HostQuiz = () => {
     sessionStorage.removeItem("hostSession");
     navigate("/");
   };
+
+  // Calculate the number of players who have answered the current question
+  const getAnsweredCount = () => {
+    if (!gameSession) return 0;
+    
+    return gameSession.players.filter(player => 
+      player.answers.some(a => a.questionIndex === gameSession.currentQuestionIndex)
+    ).length;
+  };
   
   const renderView = () => {
     switch (hostView) {
@@ -248,16 +260,17 @@ const HostQuiz = () => {
 
         <AnimatedContainer delay={100} className="glass rounded-xl p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Players ({gameSession.players.length})</h2>
+            <h2 className="text-xl font-semibold">Teams Waiting ({gameSession.players.length})</h2>
             <Button onClick={handleStartGame} disabled={gameSession.players.length === 0}>
               Start Game
             </Button>
           </div>
           
           {gameSession.players.length === 0 ? <div className="text-center py-10">
-              <p className="text-slate-50">Waiting for players to join...</p>
+              <p className="text-slate-50">Waiting for teams to join...</p>
             </div> : <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {gameSession.players.map((player, index) => <AnimatedContainer key={player.id} delay={150 + index * 50} className="bg-secondary p-3 rounded-lg text-center">
+              {gameSession.players.map((player, index) => <AnimatedContainer key={player.id} delay={150 + index * 50} className="bg-secondary p-3 rounded-lg flex items-center justify-center">
+                  <User className="w-4 h-4 mr-2 text-primary" />
                   <span className="font-medium">{player.name}</span>
                 </AnimatedContainer>)}
             </div>}
@@ -272,6 +285,9 @@ const HostQuiz = () => {
   };
   const renderQuestion = () => {
     if (!currentQuestion) return null;
+    const answeredCount = getAnsweredCount();
+    const totalPlayers = gameSession?.players.length || 0;
+    
     return <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <AnimatedContainer>
@@ -287,6 +303,25 @@ const HostQuiz = () => {
         </div>
         
         <QuestionCard question={currentQuestion} onAnswer={() => {}} isHost={true} />
+        
+        <AnimatedContainer delay={150} className="glass rounded-xl p-4 mt-6 text-center">
+          <div className="flex items-center justify-center gap-2">
+            <div className="text-base font-medium">Teams answered:</div>
+            <div className="text-xl font-bold">{answeredCount}/{totalPlayers}</div>
+          </div>
+          {answeredCount > 0 && (
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              {gameSession?.players.map(player => {
+                const hasAnswered = player.answers.some(a => a.questionIndex === gameSession.currentQuestionIndex);
+                return hasAnswered ? (
+                  <div key={player.id} className="px-3 py-1 bg-green-500/20 text-green-500 border border-green-500/30 rounded-full text-sm">
+                    {player.name} ✓
+                  </div>
+                ) : null;
+              })}
+            </div>
+          )}
+        </AnimatedContainer>
       </div>;
   };
   const renderQuestionResults = () => {
@@ -462,7 +497,7 @@ const HostQuiz = () => {
           </h1>
           {hostView === HostView.LOBBY && 
             <p className="text-muted-foreground">
-              Waiting for players to join
+              Waiting for teams to join
             </p>
           }
         </AnimatedContainer>

@@ -49,35 +49,35 @@ const itQuizQuestions: Question[] = [
     question: "What does CPU stand for?",
     options: ["Central Processing Unit", "Computer Personal Unit", "Central Process Utility", "Central Processor Unit"],
     correctOptionIndex: 0,
-    timeLimit: 20,
+    timeLimit: 15,
     points: 1000
   },
   {
     question: "Which of these is not a programming language?",
     options: ["Java", "Python", "HTML", "Ruby"],
     correctOptionIndex: 2,
-    timeLimit: 20,
+    timeLimit: 12,
     points: 1000
   },
   {
     question: "What is the main function of an operating system?",
     options: ["Run applications", "Manage hardware and software resources", "Create documents", "Connect to the internet"],
     correctOptionIndex: 1,
-    timeLimit: 20,
+    timeLimit: 18,
     points: 1000
   },
   {
     question: "Which company developed the first smartphone?",
     options: ["Apple", "Samsung", "IBM", "Nokia"],
     correctOptionIndex: 2,
-    timeLimit: 20,
+    timeLimit: 10,
     points: 1000
   },
   {
     question: "What does HTTP stand for?",
     options: ["HyperText Transfer Protocol", "High Tech Transfer Protocol", "Hyperlink Text Transfer Process", "Home Tool Transfer Protocol"],
     correctOptionIndex: 0,
-    timeLimit: 20,
+    timeLimit: 15,
     points: 1000
   },
   {
@@ -91,49 +91,49 @@ const itQuizQuestions: Question[] = [
     question: "Which of these is a cloud storage service?",
     options: ["Excel", "Dropbox", "Photoshop", "Notepad"],
     correctOptionIndex: 1,
-    timeLimit: 20,
+    timeLimit: 8,
     points: 1000
   },
   {
     question: "What is the purpose of a firewall?",
     options: ["Speed up internet connection", "Filter network traffic for security", "Improve display resolution", "Increase processing power"],
     correctOptionIndex: 1,
-    timeLimit: 20,
+    timeLimit: 25,
     points: 1000
   },
   {
     question: "Which of these is an example of a database management system?",
     options: ["Microsoft Word", "SQL Server", "Windows 10", "Chrome"],
     correctOptionIndex: 1,
-    timeLimit: 20,
+    timeLimit: 15,
     points: 1000
   },
   {
     question: "What does VPN stand for?",
     options: ["Virtual Private Network", "Visual Processing Node", "Virtual Personal Navigator", "Very Powerful Network"],
     correctOptionIndex: 0,
-    timeLimit: 20,
+    timeLimit: 12,
     points: 1000
   },
   {
     question: "Which programming language is primarily used for iOS app development?",
     options: ["Java", "Swift", "C#", "Python"],
     correctOptionIndex: 1,
-    timeLimit: 20,
+    timeLimit: 17,
     points: 1000
   },
   {
     question: "What is the function of an IP address?",
     options: ["Secure websites", "Identify devices on a network", "Store passwords", "Process graphics"],
     correctOptionIndex: 1,
-    timeLimit: 20,
+    timeLimit: 13,
     points: 1000
   },
   {
     question: "Which of these is not a web browser?",
     options: ["Chrome", "Firefox", "Safari", "Oracle"],
     correctOptionIndex: 3,
-    timeLimit: 20,
+    timeLimit: 10,
     points: 1000
   },
   {
@@ -147,7 +147,7 @@ const itQuizQuestions: Question[] = [
     question: "What is the purpose of a DNS server?",
     options: ["Store websites", "Convert domain names to IP addresses", "Create secure connections", "Process online payments"],
     correctOptionIndex: 1,
-    timeLimit: 20,
+    timeLimit: 15,
     points: 1000
   }
 ];
@@ -171,7 +171,7 @@ const QUIZZES_KEY = "kahoot_clone_quizzes";
 const GAME_SESSIONS_KEY = "kahoot_clone_sessions";
 
 // Helper functions
-const generateId = () => Math.random().toString(36).substring(2, 9);
+const generateId = () => Math.random().toString(36).substring(2, 6).toUpperCase();
 
 // Function to select 10 random questions from a quiz
 const selectRandomQuestions = (quiz: Quiz): Question[] => {
@@ -330,15 +330,18 @@ export const submitAnswer = (gameId: string, playerId: string, answerIndex: numb
   // Use the selected questions if available, otherwise fallback to the full quiz
   let correctOptionIndex = -1;
   let maxPoints = 1000;
+  let questionTimeLimit = 20; // default time limit
   
   if (session.selectedQuestions && session.selectedQuestions[questionIndex]) {
     correctOptionIndex = session.selectedQuestions[questionIndex].correctOptionIndex;
     maxPoints = session.selectedQuestions[questionIndex].points || 1000;
+    questionTimeLimit = session.selectedQuestions[questionIndex].timeLimit || 20;
   } else {
     const quiz = getQuizById(session.quizId);
     if (!quiz) return null;
     correctOptionIndex = quiz.questions[questionIndex].correctOptionIndex;
     maxPoints = quiz.questions[questionIndex].points || 1000;
+    questionTimeLimit = quiz.questions[questionIndex].timeLimit || 20;
   }
   
   const playerIndex = session.players.findIndex(player => player.id === playerId);
@@ -346,8 +349,8 @@ export const submitAnswer = (gameId: string, playerId: string, answerIndex: numb
   
   const isCorrect = answerIndex === correctOptionIndex;
   
-  // Calculate points based on how quickly they answered
-  const pointsEarned = isCorrect ? Math.round(maxPoints * (1 - timeToAnswer / 20)) : 0;
+  // Calculate points based on how quickly they answered relative to the question's time limit
+  const pointsEarned = isCorrect ? Math.round(maxPoints * (1 - timeToAnswer / questionTimeLimit)) : 0;
   
   const answer: PlayerAnswer = {
     playerId,

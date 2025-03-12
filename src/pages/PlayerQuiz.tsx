@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -168,7 +169,7 @@ const PlayerQuiz = () => {
           setPlayerView(PlayerView.FINAL_RESULTS);
         }
       }
-    }, 1000);
+    }, 500); // More frequent updates
     
     setSessionRefreshInterval(interval);
     
@@ -196,6 +197,7 @@ const PlayerQuiz = () => {
       setPointsEarned(answer.points);
       setPlayerView(PlayerView.ANSWER_SUBMITTED);
       
+      // Update the game session to reflect the new answer
       const updatedSession = getGameSessionById(gameSession.id);
       if (updatedSession) {
         setGameSession(updatedSession);
@@ -262,7 +264,7 @@ const PlayerQuiz = () => {
             <HourglassIcon className="h-12 w-12 text-blue-500 animate-pulse-soft" />
           </div>
           <p className="text-gray-300 mb-1">
-            Players in lobby: <span className="font-semibold">{playerCount}</span>
+            Teams in lobby: <span className="font-semibold">{playerCount}</span>
           </p>
         </AnimatedContainer>
         

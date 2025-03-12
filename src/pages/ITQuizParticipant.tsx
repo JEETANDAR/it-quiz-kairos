@@ -11,6 +11,7 @@ const ITQuizParticipant = () => {
   const { toast } = useToast();
   const [playerName, setPlayerName] = useState("");
   const [isJoining, setIsJoining] = useState(false);
+  const [gameId, setGameId] = useState("");
   
   const handleJoinQuiz = () => {
     if (!playerName.trim()) {
@@ -22,17 +23,33 @@ const ITQuizParticipant = () => {
       return;
     }
 
+    if (!gameId.trim()) {
+      toast({
+        title: "Missing game code",
+        description: "Please enter the game code provided by the host",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsJoining(true);
     try {
-      // Fixed gameId for the IT quiz
-      const gameId = "ITQUIZ";
-      
       // Check if the game exists
       const gameSession = getGameSessionById(gameId);
       if (!gameSession) {
         toast({
-          title: "Game not available",
-          description: "The IT Quiz hasn't been set up yet. Please try again later.",
+          title: "Game not found",
+          description: "The game code you entered doesn't exist",
+          variant: "destructive"
+        });
+        setIsJoining(false);
+        return;
+      }
+      
+      if (gameSession.status !== "waiting") {
+        toast({
+          title: "Game already started",
+          description: "This game has already started or ended",
           variant: "destructive"
         });
         setIsJoining(false);
@@ -82,10 +99,25 @@ const ITQuizParticipant = () => {
         <AnimatedContainer animation="scale-in" className="glass rounded-xl p-8 shadow-lg">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2 text-white">IT Quiz Participant</h1>
-            <p className="text-gray-300">Enter your team name to join the IT quiz</p>
+            <p className="text-gray-300">Enter the game code and your team name to join</p>
           </div>
 
           <div className="space-y-6">
+            <div>
+              <label htmlFor="gameId" className="block text-sm font-medium text-gray-300 mb-1">
+                Game Code
+              </label>
+              <input 
+                type="text" 
+                id="gameId" 
+                value={gameId} 
+                onChange={(e) => setGameId(e.target.value.toUpperCase())} 
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-black uppercase" 
+                placeholder="Enter game code" 
+                maxLength={10} 
+              />
+            </div>
+            
             <div>
               <label htmlFor="playerName" className="block text-sm font-medium text-gray-300 mb-1">
                 Team Name
@@ -108,7 +140,7 @@ const ITQuizParticipant = () => {
               size="lg" 
               className="mt-4"
             >
-              {isJoining ? "Joining..." : "Join IT Quiz"}
+              {isJoining ? "Joining..." : "Join Game"}
             </Button>
           </div>
         </AnimatedContainer>

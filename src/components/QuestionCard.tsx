@@ -51,25 +51,34 @@ const QuestionCard = ({
           onClick={() => !answered && onAnswer(index)}
           disabled={answered || isHost}
         >
-          <div className="flex items-center space-x-3">
-            {index === 0 && <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-              {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
-              {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
-            </div>}
-            {index === 1 && <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
-              {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
-              {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
-            </div>}
-            {index === 2 && <div className="w-6 h-6 bg-white rounded-full rounded-tl-none flex items-center justify-center">
-              {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
-              {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
-            </div>}
-            {index === 3 && <div className="w-6 h-6 bg-white rounded-xl border-2 border-white/80 flex items-center justify-center">
-              {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
-              {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
-            </div>}
-            <span className="font-medium text-lg">{option}</span>
-          </div>
+          {playerView && !isHost ? (
+            <div className="flex items-center justify-center h-16">
+              <div className={`w-8 h-8 ${index === 0 ? "rounded-full" : index === 1 ? "rounded" : index === 2 ? "rounded-full rounded-tl-none" : "rounded-xl"} bg-white flex items-center justify-center`}>
+                {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+                {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-3">
+              {index === 0 && <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+                {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+              </div>}
+              {index === 1 && <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
+                {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+                {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+              </div>}
+              {index === 2 && <div className="w-6 h-6 bg-white rounded-full rounded-tl-none flex items-center justify-center">
+                {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+                {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+              </div>}
+              {index === 3 && <div className="w-6 h-6 bg-white rounded-xl border-2 border-white/80 flex items-center justify-center">
+                {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
+                {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+              </div>}
+              <span className="font-medium text-lg">{option}</span>
+            </div>
+          )}
         </button>
       </AnimatedContainer>
     );
