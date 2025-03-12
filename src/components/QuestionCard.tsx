@@ -3,7 +3,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import AnimatedContainer from "./AnimatedContainer";
 import { Question } from "@/lib/quizStore";
-import { Check, X } from "lucide-react";
+import { Check, X, Hexagon, Square, CircleDot, Triangle } from "lucide-react";
 
 interface QuestionCardProps {
   question: Question;
@@ -25,6 +25,14 @@ const QuestionCard = ({
   playerView = false
 }: QuestionCardProps) => {
   const colors = ["quiz-option-red", "quiz-option-blue", "quiz-option-yellow", "quiz-option-green"];
+  
+  // Cool shape icons for each option
+  const optionIcons = [
+    <CircleDot className="h-7 w-7" />, 
+    <Square className="h-7 w-7" />, 
+    <Triangle className="h-7 w-7" />, 
+    <Hexagon className="h-7 w-7" />
+  ];
 
   const renderOption = (option: string, index: number) => {
     let optionClass = `quiz-option ${colors[index]} text-high-contrast interactive-option`;
@@ -47,15 +55,19 @@ const QuestionCard = ({
         className={`w-full ${playerView && !isHost ? 'h-20' : ''}`}
       >
         <button
-          className={cn(optionClass)}
+          className={cn(
+            optionClass,
+            playerView && !isHost ? "flex items-center justify-center" : ""
+          )}
           onClick={() => !answered && onAnswer(index)}
           disabled={answered || isHost}
         >
           {playerView && !isHost ? (
             <div className="flex items-center justify-center h-full">
-              <div className={`w-12 h-12 ${index === 0 ? "rounded-full" : index === 1 ? "rounded" : index === 2 ? "rounded-full rounded-tl-none" : "rounded-xl"} bg-white flex items-center justify-center`}>
+              <div className={`w-16 h-16 ${index === 0 ? "rounded-full" : index === 1 ? "rounded" : index === 2 ? "rounded-full rounded-tl-none" : "rounded-xl"} bg-white flex items-center justify-center`}>
                 {answered && index === correctAnswer && <Check className="h-6 w-6 text-green-600" />}
                 {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-6 w-6 text-red-600" />}
+                {!answered && optionIcons[index]}
               </div>
             </div>
           ) : (
@@ -103,7 +115,10 @@ const QuestionCard = ({
         </AnimatedContainer>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className={cn(
+        "grid gap-4",
+        playerView && !isHost ? "grid-cols-1 sm:grid-cols-2 justify-items-center max-w-md mx-auto" : "grid-cols-2"
+      )}>
         {question.options.map((option, index) => renderOption(option, index))}
       </div>
     </div>

@@ -61,7 +61,6 @@ const HostQuiz = () => {
                 setHostView(HostView.LOBBY);
               } else if (currentSession.status === "active") {
                 setHostView(HostView.QUESTION);
-                // Get current question from selectedQuestions if available
                 if (currentSession.selectedQuestions && currentSession.selectedQuestions[currentSession.currentQuestionIndex]) {
                   setCurrentQuestion(currentSession.selectedQuestions[currentSession.currentQuestionIndex]);
                 } else {
@@ -83,7 +82,6 @@ const HostQuiz = () => {
         }
       }
       
-      // Create a new session if none exists
       const newSession = createGameSession(quizId);
       setGameSession(newSession);
       sessionStorage.setItem("hostSession", JSON.stringify({
@@ -103,7 +101,7 @@ const HostQuiz = () => {
         if (updatedSession) {
           setGameSession(updatedSession);
         }
-      }, 1000); // Refresh more frequently (every second)
+      }, 1000);
       setLobbyRefreshInterval(interval);
       return () => {
         clearInterval(interval);
@@ -135,7 +133,6 @@ const HostQuiz = () => {
     if (updatedSession) {
       setGameSession(updatedSession);
       
-      // Set the first question from selectedQuestions if available
       if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
         setCurrentQuestion(updatedSession.selectedQuestions[0]);
       } else {
@@ -183,7 +180,6 @@ const HostQuiz = () => {
       return;
     }
     
-    // Get the next question from selectedQuestions if available
     let nextQuestion = null;
     if (gameSession.selectedQuestions && gameSession.selectedQuestions[nextQuestionIndex]) {
       nextQuestion = gameSession.selectedQuestions[nextQuestionIndex];
@@ -221,9 +217,15 @@ const HostQuiz = () => {
     navigate("/");
   };
 
-  // Calculate the number of players who have answered the current question
   const getAnsweredCount = () => {
     if (!gameSession) return 0;
+    
+    const freshSession = getGameSessionById(gameSession.id);
+    if (freshSession) {
+      return freshSession.players.filter(player => 
+        player.answers.some(a => a.questionIndex === freshSession.currentQuestionIndex)
+      ).length;
+    }
     
     return gameSession.players.filter(player => 
       player.answers.some(a => a.questionIndex === gameSession.currentQuestionIndex)
@@ -284,8 +286,17 @@ const HostQuiz = () => {
   };
   const renderQuestion = () => {
     if (!currentQuestion) return null;
-    const answeredCount = getAnsweredCount();
-    const totalPlayers = gameSession?.players.length || 0;
+    
+    const updatedGameSession = getGameSessionById(gameSession?.id || "");
+    const answeredCount = updatedGameSession ? updatedGameSession.players.filter(player => 
+      player.answers.some(a => a.questionIndex === updatedGameSession.currentQuestionIndex)
+    ).length : 0;
+    
+    const totalPlayers = updatedGameSession?.players.length || gameSession?.players.length || 0;
+    
+    const answeredPlayers = updatedGameSession ? updatedGameSession.players.filter(player => 
+      player.answers.some(a => a.questionIndex === updatedGameSession.currentQuestionIndex)
+    ) : [];
     
     return <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
@@ -310,14 +321,11 @@ const HostQuiz = () => {
           </div>
           {answeredCount > 0 && (
             <div className="mt-2 flex flex-wrap justify-center gap-2">
-              {gameSession?.players.map(player => {
-                const hasAnswered = player.answers.some(a => a.questionIndex === gameSession.currentQuestionIndex);
-                return hasAnswered ? (
-                  <div key={player.id} className="px-3 py-1 bg-green-500/20 text-green-500 border border-green-500/30 rounded-full text-sm">
-                    {player.name} ✓
-                  </div>
-                ) : null;
-              })}
+              {answeredPlayers.map(player => (
+                <div key={player.id} className="px-3 py-1 bg-green-500/20 text-green-500 border border-green-500/30 rounded-full text-sm">
+                  {player.name} ✓
+                </div>
+              ))}
             </div>
           )}
         </AnimatedContainer>

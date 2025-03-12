@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
-import { joinGame, getGameSessionById, createGameSession, getQuizById } from "@/lib/quizStore";
+import { joinGame, getGameSessionById, createGameSession, getQuizById, clearAllPlayers } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
 
 const ITQuizParticipant = () => {
@@ -13,10 +13,10 @@ const ITQuizParticipant = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [gameExists, setGameExists] = useState(true);
   
-  // Check if the game exists on component mount
+  // Check if the game exists on component mount and reset all players
   useEffect(() => {
     const gameId = "ITQUIZ";
-    const gameSession = getGameSessionById(gameId);
+    let gameSession = getGameSessionById(gameId);
     
     // If game doesn't exist, create it
     if (!gameSession) {
@@ -33,6 +33,7 @@ const ITQuizParticipant = () => {
         sessions.push(newSession);
         localStorage.setItem("kahoot_clone_sessions", JSON.stringify(sessions));
         
+        gameSession = newSession;
         setGameExists(true);
       } else {
         setGameExists(false);
@@ -42,6 +43,11 @@ const ITQuizParticipant = () => {
           variant: "destructive"
         });
       }
+    }
+    
+    // Clear all existing players when the page loads to ensure a fresh start
+    if (gameSession) {
+      clearAllPlayers(gameId);
     }
   }, [toast]);
   

@@ -125,6 +125,7 @@ const PlayerQuiz = () => {
     if (!gameId || !currentPlayer) return;
     
     const interval = window.setInterval(() => {
+      // Get fresh data directly from localStorage for accurate updates
       const updatedSession = getGameSessionById(gameId);
       
       if (!updatedSession) {
@@ -358,11 +359,14 @@ const PlayerQuiz = () => {
   const renderLeaderboard = () => {
     if (!gameSession || !currentPlayer) return null;
     
-    const playerRank = [...gameSession.players]
+    // Get a fresh copy of the game session to ensure the leaderboard is up to date
+    const freshGameSession = getGameSessionById(gameSession.id) || gameSession;
+    
+    const playerRank = [...freshGameSession.players]
       .sort((a, b) => b.totalPoints - a.totalPoints)
       .findIndex(p => p.id === currentPlayer.playerId) + 1;
     
-    const currentPlayerData = gameSession.players.find(p => p.id === currentPlayer.playerId);
+    const currentPlayerData = freshGameSession.players.find(p => p.id === currentPlayer.playerId);
     
     return (
       <div className="max-w-md mx-auto">
@@ -384,7 +388,7 @@ const PlayerQuiz = () => {
                playerRank === 2 ? "2nd" :
                playerRank === 3 ? "3rd" :
                `${playerRank}th`} 
-              <span className="text-foreground"> of {gameSession.players.length}</span>
+              <span className="text-foreground"> of {freshGameSession.players.length}</span>
             </p>
             {currentPlayerData && (
               <p className="text-xl font-semibold mt-2">
@@ -394,7 +398,7 @@ const PlayerQuiz = () => {
           </div>
           
           <div className="space-y-3 mt-4">
-            {[...gameSession.players]
+            {[...freshGameSession.players]
               .sort((a, b) => b.totalPoints - a.totalPoints)
               .slice(0, 5) // Only show top 5 for simplicity
               .map((player, index) => (
