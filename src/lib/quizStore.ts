@@ -280,9 +280,12 @@ export const joinGame = (gameId: string, playerName: string): Player | null => {
   const sessions = getGameSessions();
   const sessionIndex = sessions.findIndex(session => session.id === gameId);
   
-  if (sessionIndex === -1 || sessions[sessionIndex].status !== "waiting") {
+  if (sessionIndex === -1) {
     return null;
   }
+  
+  // Always allow joining even if the game has already started
+  // But we'll reset the game state in the ITQuizParticipant component
   
   const playerId = generateId();
   const player: Player = {
