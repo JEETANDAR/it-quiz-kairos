@@ -1,4 +1,3 @@
-
 // Quiz data types
 export interface Question {
   question: string;
@@ -350,7 +349,9 @@ export const submitAnswer = (gameId: string, playerId: string, answerIndex: numb
   const isCorrect = answerIndex === correctOptionIndex;
   
   // Calculate points based on how quickly they answered relative to the question's time limit
-  const pointsEarned = isCorrect ? Math.round(maxPoints * (1 - timeToAnswer / questionTimeLimit)) : 0;
+  // Ensure we don't give negative points for slow answers
+  const timeRatio = Math.min(1, timeToAnswer / questionTimeLimit);
+  const pointsEarned = isCorrect ? Math.max(0, Math.round(maxPoints * (1 - timeRatio))) : 0;
   
   const answer: PlayerAnswer = {
     playerId,
@@ -361,9 +362,25 @@ export const submitAnswer = (gameId: string, playerId: string, answerIndex: numb
     points: pointsEarned
   };
   
-  session.players[playerIndex].answers.push(answer);
+  // Check if player already answered this question
+  const existingAnswerIndex = session.players[playerIndex].answers.findIndex(
+    a => a.questionIndex === questionIndex
+  );
+  
+  if (existingAnswerIndex !== -1) {
+    // Replace existing answer
+    const oldPoints = session.players[playerIndex].answers[existingAnswerIndex].points;
+    session.players[playerIndex].totalPoints -= oldPoints;
+    session.players[playerIndex].answers[existingAnswerIndex] = answer;
+  } else {
+    // Add new answer
+    session.players[playerIndex].answers.push(answer);
+  }
+  
+  // Update total points
   session.players[playerIndex].totalPoints += pointsEarned;
   
+  // Save updated session
   localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));
   
   return answer;
@@ -409,4 +426,15 @@ export const endGame = (gameId: string): GameSession | null => {
   localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));
   
   return sessions[sessionIndex];
+};
+
+export const clearAllPlayers = (gameId: string): void => {
+  const sessions = getGameSessions();
+  const sessionIndex = sessions.findIndex(session => session.id === gameId);
+  
+  if (sessionIndex !== -1) {
+    // Reset players array to empty
+    sessions[sessionIndex].players = [];
+    localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));
+  }
 };

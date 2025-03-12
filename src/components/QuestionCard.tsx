@@ -44,7 +44,7 @@ const QuestionCard = ({
         key={index} 
         delay={150 + (index * 100)} 
         animation="slide-up"
-        className="w-full"
+        className={`w-full ${playerView && !isHost ? 'h-20' : ''}`}
       >
         <button
           className={cn(optionClass)}
@@ -52,10 +52,10 @@ const QuestionCard = ({
           disabled={answered || isHost}
         >
           {playerView && !isHost ? (
-            <div className="flex items-center justify-center h-16">
-              <div className={`w-8 h-8 ${index === 0 ? "rounded-full" : index === 1 ? "rounded" : index === 2 ? "rounded-full rounded-tl-none" : "rounded-xl"} bg-white flex items-center justify-center`}>
-                {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
-                {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
+            <div className="flex items-center justify-center h-full">
+              <div className={`w-12 h-12 ${index === 0 ? "rounded-full" : index === 1 ? "rounded" : index === 2 ? "rounded-full rounded-tl-none" : "rounded-xl"} bg-white flex items-center justify-center`}>
+                {answered && index === correctAnswer && <Check className="h-6 w-6 text-green-600" />}
+                {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-6 w-6 text-red-600" />}
               </div>
             </div>
           ) : (
@@ -103,7 +103,7 @@ const QuestionCard = ({
         </AnimatedContainer>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {question.options.map((option, index) => renderOption(option, index))}
       </div>
     </div>

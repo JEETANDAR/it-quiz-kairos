@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -139,37 +138,36 @@ const PlayerQuiz = () => {
         return;
       }
       
-      if (JSON.stringify(updatedSession) !== JSON.stringify(gameSession)) {
-        setGameSession(updatedSession);
-        
-        if (updatedSession.status === "active" && playerView === PlayerView.WAITING) {
-          // Use selectedQuestions if available
-          if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
-            setCurrentQuestion(updatedSession.selectedQuestions[updatedSession.currentQuestionIndex]);
-          } else if (quiz) {
-            setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
-          }
-          setPlayerView(PlayerView.QUESTION);
-          setAnswerTime(Date.now());
-          setSelectedAnswer(null);
-        } else if (updatedSession.status === "active" && 
-                  gameSession?.currentQuestionIndex !== updatedSession.currentQuestionIndex) {
-          // Use selectedQuestions if available
-          if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
-            setCurrentQuestion(updatedSession.selectedQuestions[updatedSession.currentQuestionIndex]);
-          } else if (quiz) {
-            setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
-          }
-          setPlayerView(PlayerView.QUESTION);
-          setAnswerTime(Date.now());
-          setSelectedAnswer(null);
-          setAnswerCorrect(null);
-          setPointsEarned(0);
-        } else if (updatedSession.status === "finished" && gameSession?.status !== "finished") {
-          setPlayerView(PlayerView.FINAL_RESULTS);
+      // Always update the game session to ensure scores are current
+      setGameSession(updatedSession);
+      
+      if (updatedSession.status === "active" && playerView === PlayerView.WAITING) {
+        // Use selectedQuestions if available
+        if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
+          setCurrentQuestion(updatedSession.selectedQuestions[updatedSession.currentQuestionIndex]);
+        } else if (quiz) {
+          setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
         }
+        setPlayerView(PlayerView.QUESTION);
+        setAnswerTime(Date.now());
+        setSelectedAnswer(null);
+      } else if (updatedSession.status === "active" && 
+                gameSession?.currentQuestionIndex !== updatedSession.currentQuestionIndex) {
+        // Use selectedQuestions if available
+        if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
+          setCurrentQuestion(updatedSession.selectedQuestions[updatedSession.currentQuestionIndex]);
+        } else if (quiz) {
+          setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
+        }
+        setPlayerView(PlayerView.QUESTION);
+        setAnswerTime(Date.now());
+        setSelectedAnswer(null);
+        setAnswerCorrect(null);
+        setPointsEarned(0);
+      } else if (updatedSession.status === "finished" && gameSession?.status !== "finished") {
+        setPlayerView(PlayerView.FINAL_RESULTS);
       }
-    }, 500); // More frequent updates
+    }, 300); // More frequent updates for better score syncing
     
     setSessionRefreshInterval(interval);
     
@@ -364,6 +362,8 @@ const PlayerQuiz = () => {
       .sort((a, b) => b.totalPoints - a.totalPoints)
       .findIndex(p => p.id === currentPlayer.playerId) + 1;
     
+    const currentPlayerData = gameSession.players.find(p => p.id === currentPlayer.playerId);
+    
     return (
       <div className="max-w-md mx-auto">
         <AnimatedContainer className="glass rounded-xl p-8 text-center mb-6">
@@ -386,11 +386,17 @@ const PlayerQuiz = () => {
                `${playerRank}th`} 
               <span className="text-foreground"> of {gameSession.players.length}</span>
             </p>
+            {currentPlayerData && (
+              <p className="text-xl font-semibold mt-2">
+                {currentPlayerData.totalPoints} points
+              </p>
+            )}
           </div>
           
           <div className="space-y-3 mt-4">
             {[...gameSession.players]
               .sort((a, b) => b.totalPoints - a.totalPoints)
+              .slice(0, 5) // Only show top 5 for simplicity
               .map((player, index) => (
               <div key={player.id} className={cn(
                 "leaderboard-item flex justify-between items-center p-3 rounded-lg",

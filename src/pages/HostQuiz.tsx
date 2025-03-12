@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -334,22 +333,6 @@ const HostQuiz = () => {
     const totalResponses = playerAnswers.length;
     const correctResponses = playerAnswers.filter(a => a.correct).length;
     
-    const answerCounts = [0, 0, 0, 0];
-    playerAnswers.forEach(answer => {
-      if (answer.answerIndex >= 0 && answer.answerIndex < 4) {
-        answerCounts[answer.answerIndex]++;
-      }
-    });
-    
-    const playersWithPointsThisQuestion = gameSession.players.map(player => {
-      const answer = player.answers.find(a => a.questionIndex === gameSession.currentQuestionIndex);
-      return {
-        ...player,
-        pointsThisQuestion: answer?.points || 0,
-        isCorrect: answer?.correct || false
-      };
-    }).sort((a, b) => b.pointsThisQuestion - a.pointsThisQuestion);
-    
     return (
       <div className="max-w-4xl mx-auto">
         <AnimatedContainer className="glass rounded-xl p-6 mb-8 text-center">
@@ -379,44 +362,42 @@ const HostQuiz = () => {
         <AnimatedContainer delay={200} className="glass rounded-xl p-6 my-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Trophy className="text-quiz-yellow" />
-              <h3 className="text-lg font-semibold text-high-contrast">Question Leaderboard</h3>
-            </div>
-            {playersWithPointsThisQuestion.length > 0 && <ScoreExporter players={gameSession.players} quizTitle={quiz?.title || 'Quiz'} />}
-          </div>
-          
-          <div className="space-y-2 mb-6">
-            {playersWithPointsThisQuestion.map((player, index) => <div key={player.id} className="leaderboard-item flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white font-bold", index === 0 ? "bg-quiz-yellow" : index === 1 ? "bg-blue-500" : index === 2 ? "bg-orange-500" : "bg-muted")}>
-                    {index + 1}
-                  </div>
-                  <span className="font-medium text-high-contrast">{player.name}</span>
-                  {player.isCorrect && <Check className="h-4 w-4 text-green-500" />}
-                </div>
-                <span className="font-semibold score-animate">{player.pointsThisQuestion} pts</span>
-              </div>)}
-          </div>
-        </AnimatedContainer>
-        
-        <AnimatedContainer delay={300} className="glass rounded-xl p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
               <Users className="text-blue-500" />
-              <h3 className="text-lg font-semibold text-high-contrast">Overall Leaderboard</h3>
+              <h3 className="text-lg font-semibold text-high-contrast">Leaderboard</h3>
             </div>
+            {gameSession.players.length > 0 && <ScoreExporter players={gameSession.players} quizTitle={quiz?.title || 'Quiz'} />}
           </div>
           
           <div className="space-y-2">
-            {[...gameSession.players].sort((a, b) => b.totalPoints - a.totalPoints).map((player, index) => <div key={player.id} className={cn("leaderboard-item flex justify-between items-center p-3 rounded-lg", index === 0 ? "bg-quiz-yellow/20 border border-quiz-yellow/30" : index === 1 ? "bg-blue-500/20 border border-blue-500/30" : index === 2 ? "bg-orange-500/20 border border-orange-500/30" : "")}>
+            {[...gameSession.players].sort((a, b) => b.totalPoints - a.totalPoints).map((player, index) => (
+              <div 
+                key={player.id} 
+                className={cn(
+                  "leaderboard-item flex justify-between items-center p-3 rounded-lg",
+                  index === 0 ? "bg-quiz-yellow/20 border border-quiz-yellow/30" : 
+                  index === 1 ? "bg-blue-500/20 border border-blue-500/30" : 
+                  index === 2 ? "bg-orange-500/20 border border-orange-500/30" : ""
+                )}
+              >
                 <div className="flex items-center gap-3">
-                  <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white font-bold", index === 0 ? "bg-quiz-yellow" : index === 1 ? "bg-blue-500" : index === 2 ? "bg-orange-500" : "bg-muted")}>
+                  <div className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
+                    index === 0 ? "bg-quiz-yellow" : 
+                    index === 1 ? "bg-blue-500" : 
+                    index === 2 ? "bg-orange-500" : "bg-muted"
+                  )}>
                     {index + 1}
                   </div>
                   <span className="font-medium text-high-contrast">{player.name}</span>
                 </div>
-                <span className="font-semibold">{player.totalPoints} pts</span>
-              </div>)}
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{player.totalPoints} pts</span>
+                  <div className="w-4 h-4 rounded-full flex items-center justify-center bg-secondary text-xs">
+                    {player.answers.filter(a => a.correct).length}/{player.answers.length}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </AnimatedContainer>
         

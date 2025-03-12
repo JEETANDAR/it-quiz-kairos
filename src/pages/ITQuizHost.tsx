@@ -3,9 +3,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import AnimatedContainer from "@/components/AnimatedContainer";
-import { getGameSessionById, createGameSession, getQuizById, GameSession } from "@/lib/quizStore";
+import { getGameSessionById, createGameSession, getQuizById, GameSession, clearAllPlayers } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
-import { Users } from "lucide-react";
+import { Users, X } from "lucide-react";
 
 const ITQuizHost = () => {
   const navigate = useNavigate();
@@ -75,7 +75,7 @@ const ITQuizHost = () => {
         if (updatedSession) {
           setGameSession(updatedSession);
         }
-      }, 2000);
+      }, 1000); // Refresh more frequently
       
       setRefreshInterval(interval);
       
@@ -108,6 +108,49 @@ const ITQuizHost = () => {
     navigate(`/host/${gameSession.quizId}`);
   };
 
+  const handleClearAllPlayers = () => {
+    if (!gameSession) return;
+    
+    clearAllPlayers(gameSession.id);
+    
+    // Update the local state with fresh session
+    const updatedSession = getGameSessionById(gameSession.id);
+    if (updatedSession) {
+      setGameSession(updatedSession);
+      
+      toast({
+        title: "Teams cleared",
+        description: "All teams have been removed from the lobby",
+      });
+    }
+  };
+
+  const handleRemovePlayer = (playerId: string) => {
+    if (!gameSession) return;
+    
+    const updatedPlayers = gameSession.players.filter(p => p.id !== playerId);
+    
+    // Update the session with the filtered players
+    const updatedSession = {...gameSession, players: updatedPlayers};
+    
+    // Save to localStorage
+    const sessions = JSON.parse(localStorage.getItem("kahoot_clone_sessions") || "[]");
+    const sessionIndex = sessions.findIndex((s: GameSession) => s.id === gameSession.id);
+    
+    if (sessionIndex !== -1) {
+      sessions[sessionIndex] = updatedSession;
+      localStorage.setItem("kahoot_clone_sessions", JSON.stringify(sessions));
+      
+      // Update local state
+      setGameSession(updatedSession);
+      
+      toast({
+        title: "Team removed",
+        description: "The team has been removed from the lobby",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen animated-bg py-12 bg-slate-800">
       <div className="container mx-auto px-4">
@@ -122,19 +165,27 @@ const ITQuizHost = () => {
               <div className="flex items-center gap-2">
                 <Users className="text-blue-400" />
                 <h2 className="text-xl font-semibold text-white">
-                  Participants ({gameSession?.players.length || 0})
+                  Teams ({gameSession?.players.length || 0})
                 </h2>
               </div>
-              <Button 
-                onClick={handleStartQuiz} 
-                disabled={!gameSession || gameSession.players.length === 0}>
-                Start Quiz
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearAllPlayers}
+                  disabled={!gameSession || gameSession.players.length === 0}>
+                  Clear All
+                </Button>
+                <Button 
+                  onClick={handleStartQuiz} 
+                  disabled={!gameSession || gameSession.players.length === 0}>
+                  Start Quiz
+                </Button>
+              </div>
             </div>
             
             {(!gameSession || gameSession.players.length === 0) ? (
               <div className="text-center py-10">
-                <p className="text-gray-300">Waiting for participants to join...</p>
+                <p className="text-gray-300">Waiting for teams to join...</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -142,8 +193,14 @@ const ITQuizHost = () => {
                   <AnimatedContainer 
                     key={player.id} 
                     delay={150 + index * 50} 
-                    className="bg-secondary p-3 rounded-lg text-center"
+                    className="bg-secondary p-3 rounded-lg text-center relative"
                   >
+                    <button 
+                      onClick={() => handleRemovePlayer(player.id)}
+                      className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-red-500/20 hover:bg-red-500/50 transition-colors"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
                     <span className="font-medium text-white">{player.name}</span>
                   </AnimatedContainer>
                 ))}
