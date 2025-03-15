@@ -249,15 +249,7 @@ const HostQuiz = () => {
   const renderLobby = () => {
     if (!gameSession) return null;
     return <div className="max-w-2xl mx-auto">
-        <AnimatedContainer className="glass rounded-xl p-6 mb-6 text-center">
-          <h2 className="text-xl font-semibold mb-4">Game Code</h2>
-          <div className="text-4xl font-bold tracking-widest bg-secondary py-3 px-6 rounded-lg mb-4">
-            {gameSession.id}
-          </div>
-          <p className="text-slate-50">
-            Share this code with players to join the game
-          </p>
-        </AnimatedContainer>
+       
 
         <AnimatedContainer delay={100} className="glass rounded-xl p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
