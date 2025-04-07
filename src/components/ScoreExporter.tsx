@@ -1,11 +1,10 @@
 
-import React from "react";
-import { FileSpreadsheet } from "lucide-react";
-import Button from "./Button";
-import { Player } from "@/lib/quizStore";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { Player } from '@/lib/quizStore';
+import Button from '@/components/Button';
+import { cn } from '@/lib/utils';
 
-interface ScoreExporterProps {
+export interface ScoreExporterProps {
   players: Player[];
   quizTitle: string;
   asButton?: boolean;
@@ -16,77 +15,72 @@ interface ScoreExporterProps {
 const ScoreExporter: React.FC<ScoreExporterProps> = ({ 
   players, 
   quizTitle, 
-  asButton = false, 
-  buttonText = "Download Scores",
+  asButton = false,
+  buttonText = "Export Scores",
   className
 }) => {
-  const downloadExcel = () => {
-    // Create CSV header
-    const headers = ["Rank", "Team Name", "Score", "Correct Answers", "Total Questions"];
-    
-    // Sort players by score
+  const exportToCSV = () => {
+    // Sort players by total points (descending)
     const sortedPlayers = [...players].sort((a, b) => b.totalPoints - a.totalPoints);
     
-    // Create CSV rows
+    // Create headers for the CSV
+    const headers = ['Rank', 'Team', 'Score', 'Correct Answers'];
+    
+    // Create rows for each player
     const rows = sortedPlayers.map((player, index) => {
-      const rank = index + 1;
-      const totalQuestions = player.answers.length;
       const correctAnswers = player.answers.filter(a => a.correct).length;
-      
       return [
-        rank,
-        player.name,
-        player.totalPoints,
-        correctAnswers,
-        totalQuestions
+        index + 1, // Rank
+        player.name, // Team name
+        player.totalPoints, // Score
+        correctAnswers // Number of correct answers
       ];
     });
     
     // Combine headers and rows
     const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.join(","))
-    ].join("\n");
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
     
-    // Create downloadable link
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    // Create a Blob containing the CSV data
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create a download link
     const url = URL.createObjectURL(blob);
-    
-    // Create temporary link and trigger download
-    const link = document.createElement("a");
-    const sanitizedTitle = quizTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const timestamp = new Date().toISOString().slice(0, 10);
-    
-    link.href = url;
-    link.setAttribute("download", `${sanitizedTitle}_scores_${timestamp}.csv`);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${quizTitle.replace(/\s+/g, '_')}_scores.csv`);
     document.body.appendChild(link);
+    
+    // Trigger download
     link.click();
     
     // Clean up
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
-
+  
   if (asButton) {
     return (
-      <button 
-        onClick={downloadExcel} 
+      <Button
+        onClick={exportToCSV}
         className={className}
       >
         {buttonText}
-      </button>
+      </Button>
     );
   }
-
+  
   return (
-    <Button 
-      onClick={downloadExcel} 
-      className={cn("flex items-center gap-2", className)}
-      variant="primary"
+    <button 
+      onClick={exportToCSV}
+      className={cn(
+        "px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors",
+        className
+      )}
     >
-      <FileSpreadsheet size={18} />
-      <span>Download Scores</span>
-    </Button>
+      {buttonText}
+    </button>
   );
 };
 

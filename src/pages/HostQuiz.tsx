@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -155,6 +156,8 @@ const HostQuiz = () => {
 
     // Debug logs
     console.log("Current game session before advancing:", gameSession);
+    console.log("Current question index:", gameSession.currentQuestionIndex);
+    console.log("Selected questions count:", gameSession.selectedQuestions?.length);
     
     const nextQuestionIndex = advanceQuestion(gameSession.id);
     console.log("Next question index result:", nextQuestionIndex);
@@ -163,9 +166,7 @@ const HostQuiz = () => {
     const updatedSession = getGameSessionById(gameSession.id);
     console.log("Updated session after advancing:", updatedSession);
     
-    if (updatedSession) {
-      setGameSession(updatedSession);
-    } else {
+    if (!updatedSession) {
       toast({
         title: "Error",
         description: "Failed to update the game session",
@@ -173,6 +174,8 @@ const HostQuiz = () => {
       });
       return;
     }
+    
+    setGameSession(updatedSession);
 
     if (nextQuestionIndex === null) {
       toast({
@@ -198,11 +201,12 @@ const HostQuiz = () => {
     let nextQuestion = null;
     if (updatedSession.selectedQuestions && updatedSession.selectedQuestions[nextQuestionIndex]) {
       nextQuestion = updatedSession.selectedQuestions[nextQuestionIndex];
-    } else if (quiz) {
+    } else if (quiz.questions && quiz.questions[nextQuestionIndex]) {
       nextQuestion = quiz.questions[nextQuestionIndex];
     }
 
     if (nextQuestion) {
+      console.log("Setting next question:", nextQuestion);
       setCurrentQuestion(nextQuestion);
       setHostView(HostView.QUESTION);
       setTimerActive(true);
@@ -310,13 +314,14 @@ const HostQuiz = () => {
       player.answers.some(a => a.questionIndex === updatedGameSession.currentQuestionIndex)
     );
 
+    const totalQuestions = updatedGameSession.selectedQuestions?.length || quiz?.questions.length || 0;
+
     return (
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <AnimatedContainer>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Question {updatedGameSession.currentQuestionIndex !== undefined ? updatedGameSession.currentQuestionIndex + 1 : ""}
-              {` / ${updatedGameSession.selectedQuestions?.length || quiz?.questions.length}`}
+              Question {updatedGameSession.currentQuestionIndex + 1} / {totalQuestions}
             </h2>
           </AnimatedContainer>
           <AnimatedContainer delay={100}>
@@ -375,6 +380,9 @@ const HostQuiz = () => {
 
     const totalResponses = playerAnswers.length;
     const correctResponses = playerAnswers.filter(a => a.correct).length;
+    
+    const totalQuestions = freshGameSession.selectedQuestions?.length || quiz?.questions.length || 0;
+    const isLastQuestion = freshGameSession.currentQuestionIndex >= totalQuestions - 1;
 
     return (
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
@@ -408,9 +416,9 @@ const HostQuiz = () => {
             onClick={handleNextQuestion}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-lg transition-all"
           >
-            {freshGameSession.currentQuestionIndex < (freshGameSession.selectedQuestions?.length - 1 || quiz?.questions.length - 1 || 0) 
-              ? "Next Question" 
-              : "See Final Results"}
+            {isLastQuestion 
+              ? "See Final Results" 
+              : "Next Question"}
           </Button>
         </AnimatedContainer>
       </div>

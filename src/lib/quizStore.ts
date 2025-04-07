@@ -1,3 +1,4 @@
+
 // Quiz data types
 export interface Question {
   question: string;
@@ -329,7 +330,7 @@ export const createGameSession = (quizId: string): GameSession => {
     throw new Error(`Quiz with ID ${quizId} not found`);
   }
   
-  // Make sure we're selecting the correct number of questions (all questions)
+  // Important: Make sure we're using ALL questions from the quiz
   const selectedQuestions = [...quiz.questions];
   
   const newSession: GameSession = {
@@ -490,21 +491,27 @@ export const advanceQuestion = (gameId: string): number | null => {
   const sessionIndex = sessions.findIndex(session => session.id === gameId);
   
   if (sessionIndex === -1 || sessions[sessionIndex].status !== "active") {
+    console.error("Invalid game session or game not active");
     return null;
   }
   
   const session = sessions[sessionIndex];
   const newQuestionIndex = session.currentQuestionIndex + 1;
   
-  // Check if we're out of questions
+  // Determine the total number of questions
   const totalQuestions = session.selectedQuestions?.length || 0;
   
-  // Debug log
-  console.log("Total questions:", totalQuestions);
-  console.log("Current index:", session.currentQuestionIndex);
-  console.log("New index:", newQuestionIndex);
+  console.log("Advancing question:", {
+    currentIndex: session.currentQuestionIndex,
+    newIndex: newQuestionIndex,
+    totalQuestions: totalQuestions,
+    hasSelectedQuestions: !!session.selectedQuestions,
+    selectedQuestionsLength: session.selectedQuestions?.length
+  });
   
+  // Check if we're out of questions
   if (newQuestionIndex >= totalQuestions) {
+    console.log("End of questions reached, marking game as finished");
     // Mark the game as finished
     session.status = "finished";
     localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));

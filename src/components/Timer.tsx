@@ -1,12 +1,11 @@
 
-import React, { useEffect, useState, useRef } from "react";
-import { cn } from "@/lib/utils";
+import React, { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
-interface TimerProps {
+export interface TimerProps {
   duration: number;
-  onTimeUp?: () => void;
+  onTimeUp: () => void;
   isActive?: boolean;
-  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -14,151 +13,72 @@ const Timer: React.FC<TimerProps> = ({
   duration,
   onTimeUp,
   isActive = true,
-  size = "md",
   className
 }) => {
-  const [secondsLeft, setSecondsLeft] = useState(duration);
-  const circleRef = useRef<SVGCircleElement>(null);
-  const [circumference, setCircumference] = useState(0);
-  const [tickPlayed, setTickPlayed] = useState<{[key: number]: boolean}>({});
-  const tickSoundRef = useRef<HTMLAudioElement | null>(null);
-  const timeUpSoundRef = useRef<HTMLAudioElement | null>(null);
+  const [timeLeft, setTimeLeft] = useState(duration);
+  const [isPaused, setIsPaused] = useState(!isActive);
 
   useEffect(() => {
-    // Create audio elements
-    tickSoundRef.current = new Audio('/tick.mp3');
-    timeUpSoundRef.current = new Audio('/time-up.mp3');
-
-    return () => {
-      // Clean up audio elements
-      if (tickSoundRef.current) {
-        tickSoundRef.current.pause();
-        tickSoundRef.current = null;
-      }
-      if (timeUpSoundRef.current) {
-        timeUpSoundRef.current.pause();
-        timeUpSoundRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (circleRef.current) {
-      const radius = circleRef.current.r.baseVal.value;
-      const calculatedCircumference = radius * 2 * Math.PI;
-      setCircumference(calculatedCircumference);
-    }
-  }, []);
-
-  useEffect(() => {
-    setSecondsLeft(duration);
+    setTimeLeft(duration);
   }, [duration]);
 
   useEffect(() => {
-    if (!isActive) return;
+    setIsPaused(!isActive);
+  }, [isActive]);
 
-    const timer = setInterval(() => {
-      setSecondsLeft((prevSeconds) => {
-        if (prevSeconds <= 1) {
-          clearInterval(timer);
-          if (onTimeUp) onTimeUp();
-          // Play time up sound
-          if (timeUpSoundRef.current) {
-            timeUpSoundRef.current.play().catch(err => {
-              console.log("Error playing time-up sound:", err);
-            });
-          }
-          return 0;
-        }
-        
-        // Play tick sound for the last 5 seconds
-        const newSeconds = prevSeconds - 1;
-        if (newSeconds <= 5 && !tickPlayed[newSeconds]) {
-          if (tickSoundRef.current) {
-            tickSoundRef.current.currentTime = 0;
-            tickSoundRef.current.play().catch(err => {
-              console.log("Error playing tick sound:", err);
-            });
-            setTickPlayed(prev => ({...prev, [newSeconds]: true}));
-          }
-        }
-        
-        return newSeconds;
+  useEffect(() => {
+    if (isPaused) return;
+
+    if (timeLeft <= 0) {
+      onTimeUp();
+      return;
+    }
+
+    // Play ticking sound when time is low
+    if (timeLeft <= 5) {
+      const tickSound = new Audio('/tick.mp3');
+      tickSound.play().catch(err => {
+        console.log("Error playing tick sound:", err);
       });
+    }
+
+    const timer = setTimeout(() => {
+      setTimeLeft(timeLeft - 1);
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [isActive, duration, onTimeUp, tickPlayed]);
+    return () => clearTimeout(timer);
+  }, [timeLeft, isPaused, onTimeUp]);
 
-  const getTimerSize = () => {
-    switch (size) {
-      case "sm":
-        return "h-14 w-14 text-lg";
-      case "lg":
-        return "h-24 w-24 text-3xl";
-      case "md":
-      default:
-        return "h-20 w-20 text-2xl";
-    }
-  };
-
-  const getStrokeWidth = () => {
-    switch (size) {
-      case "sm":
-        return 4;
-      case "lg":
-        return 8;
-      case "md":
-      default:
-        return 6;
-    }
-  };
-
-  const setProgress = (seconds: number) => {
-    if (secondsLeft === 0 || duration === 0) return 0;
-    const progress = ((duration - seconds) / duration) * circumference;
-    return progress;
-  };
-
-  const getTimerColor = () => {
-    const percentage = (secondsLeft / duration) * 100;
-    if (percentage <= 25) return "text-red-500";
-    if (percentage <= 50) return "text-yellow-500";
-    return "text-green-500";
-  };
+  // Calculate percentage for progress circle
+  const percentage = ((duration - timeLeft) / duration) * 100;
 
   return (
-    <div className={cn("relative flex items-center justify-center", getTimerSize(), className)}>
-      <svg className="h-full w-full -rotate-90">
+    <div className={cn("relative inline-flex items-center justify-center", className)}>
+      <svg className="w-20 h-20">
         <circle
-          className="text-gray-600/20"
-          strokeWidth={getStrokeWidth()}
+          className="text-gray-700"
+          strokeWidth="5"
           stroke="currentColor"
           fill="transparent"
-          r="45%"
-          cx="50%"
-          cy="50%"
+          r="30"
+          cx="40"
+          cy="40"
         />
         <circle
-          className={cn("timer-circle", getTimerColor())}
-          ref={circleRef}
-          strokeWidth={getStrokeWidth()}
-          strokeDashoffset={setProgress(secondsLeft)}
+          className={`${timeLeft <= 5 ? 'text-red-500' : 'text-blue-600'}`}
+          strokeWidth="5"
+          strokeDasharray={30 * 2 * Math.PI}
+          strokeDashoffset={30 * 2 * Math.PI * (1 - percentage / 100)}
           strokeLinecap="round"
           stroke="currentColor"
           fill="transparent"
-          r="45%"
-          cx="50%"
-          cy="50%"
-          style={{
-            animationDuration: `${duration}s`,
-            animationPlayState: isActive ? "running" : "paused"
-          }}
+          r="30"
+          cx="40"
+          cy="40"
+          style={{ transition: "stroke-dashoffset 0.5s" }}
         />
       </svg>
-      <span className={cn("absolute font-bold text-white", secondsLeft <= 5 ? "animate-pulse text-red-500" : "")}>
-        {secondsLeft}
-      </span>
+      <span className="absolute text-2xl font-bold">{timeLeft}</span>
     </div>
   );
 };
