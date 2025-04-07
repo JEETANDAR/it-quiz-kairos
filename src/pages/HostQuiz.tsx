@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -166,6 +165,13 @@ const HostQuiz = () => {
     
     if (updatedSession) {
       setGameSession(updatedSession);
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to update the game session",
+        variant: "destructive",
+      });
+      return;
     }
 
     if (nextQuestionIndex === null) {
@@ -190,7 +196,7 @@ const HostQuiz = () => {
 
     // Get the next question
     let nextQuestion = null;
-    if (updatedSession && updatedSession.selectedQuestions && updatedSession.selectedQuestions[nextQuestionIndex]) {
+    if (updatedSession.selectedQuestions && updatedSession.selectedQuestions[nextQuestionIndex]) {
       nextQuestion = updatedSession.selectedQuestions[nextQuestionIndex];
     } else if (quiz) {
       nextQuestion = quiz.questions[nextQuestionIndex];

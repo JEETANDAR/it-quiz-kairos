@@ -329,7 +329,8 @@ export const createGameSession = (quizId: string): GameSession => {
     throw new Error(`Quiz with ID ${quizId} not found`);
   }
   
-  const selectedQuestions = selectAllQuestions(quiz); // Use all 30 questions
+  // Make sure we're selecting the correct number of questions (all questions)
+  const selectedQuestions = [...quiz.questions];
   
   const newSession: GameSession = {
     id: gameId,
