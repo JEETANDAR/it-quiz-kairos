@@ -116,8 +116,8 @@ const QuestionCard = ({
       )}
 
       <div className={cn(
-        "grid gap-4",
-        playerView && !isHost ? "grid-cols-1 sm:grid-cols-2 justify-items-center max-w-md mx-auto" : "grid-cols-2"
+        "grid gap-10",
+        playerView && !isHost ? "grid-cols-2 sm:grid-cols-2 justify-items-center max-w-md mx-auto" : "grid-cols-2"
       )}>
         {question.options.map((option, index) => renderOption(option, index))}
       </div>

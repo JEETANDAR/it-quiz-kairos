@@ -101,6 +101,7 @@
 }
 
 /* Quiz option buttons */
+/* Base styles for quiz options */
 .quiz-option {
   @apply relative overflow-hidden rounded-xl p-6 shadow-md transition-all duration-300 hover:shadow-lg;
 }
@@ -110,6 +111,7 @@
   @apply absolute inset-0 bg-gradient-to-br opacity-90 -z-10;
 }
 
+/* Color-specific styles */
 .quiz-option-red::before {
   @apply from-quiz-red/80 to-quiz-red;
 }
@@ -126,6 +128,37 @@
   @apply from-quiz-green/80 to-quiz-green;
 }
 
+/* Responsive layout */
+.quiz-options-container {
+  display: grid;
+  gap: 1rem; /* Default gap between options */
+  padding: 1rem; /* Default padding */
+}
+
+/* Mobile view: 2x2 grid */
+@media (max-width: 767px) {
+  .quiz-options-container {
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    grid-template-rows: repeat(2, 1fr); /* Two rows */
+  }
+}
+
+/* Tablet and larger screens: Single row with more spacing */
+@media (min-width: 768px) {
+  .quiz-options-container {
+    grid-template-columns: repeat(4, 1fr); /* Four columns */
+    gap: 2rem; /* Increased gap for larger screens */
+    padding: 2rem; /* Increased padding for larger screens */
+  }
+}
+
+/* Laptop and larger screens: Even more spacing */
+@media (min-width: 1024px) {
+  .quiz-options-container {
+    gap: 3rem; /* Even more gap for laptops */
+    padding: 3rem; /* Even more padding for laptops */
+  }
+}
 /* Timer animation */
 @keyframes countdown {
   from {

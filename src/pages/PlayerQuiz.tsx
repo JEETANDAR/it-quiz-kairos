@@ -313,7 +313,7 @@ const PlayerQuiz = () => {
                   <Check className="h-12 w-12 text-green-500" />
                 </div>
                 <h2 className="text-2xl font-semibold text-green-500 mb-2">Correct!</h2>
-                <p className="text-xl font-bold mb-4 score-animate">+{pointsEarned} points</p>
+                {/* <p className="text-xl font-bold mb-4 score-animate">+{pointsEarned} points</p> */}
               </>
             ) : answerCorrect === false ? (
               <>
@@ -349,7 +349,7 @@ const PlayerQuiz = () => {
             className="mt-6"
             size="sm"
           >
-            Show Leaderboard
+            Next
           </Button>
         </AnimatedContainer>
       </div>
@@ -373,10 +373,10 @@ const PlayerQuiz = () => {
         <AnimatedContainer className="glass rounded-xl p-8 text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Trophy className="text-quiz-yellow" />
-            <h3 className="text-xl font-semibold text-high-contrast">Current Standings</h3>
+            <h3 className="text-xl font-semibold text-high-contrast">Waiting for the Host to display the next question.</h3>
           </div>
           
-          <div className="text-center mb-6">
+          {/* <div className="text-center mb-6">
             <p className="text-muted-foreground mb-1">Your rank</p>
             <p className={cn(
               "text-2xl font-bold",
@@ -395,9 +395,9 @@ const PlayerQuiz = () => {
                 {currentPlayerData.totalPoints} points
               </p>
             )}
-          </div>
+          </div> */}
           
-          <div className="space-y-3 mt-4">
+          {/* <div className="space-y-3 mt-4">
             {[...freshGameSession.players]
               .sort((a, b) => b.totalPoints - a.totalPoints)
               .slice(0, 5) // Only show top 5 for simplicity
@@ -423,7 +423,7 @@ const PlayerQuiz = () => {
                 <span className="font-semibold">{player.totalPoints} pts</span>
               </div>
             ))}
-          </div>
+          </div> */}
           
           <Button 
             variant="outline" 
@@ -431,7 +431,7 @@ const PlayerQuiz = () => {
             className="mt-6"
             size="sm"
           >
-            Hide Leaderboard
+            Go Back
           </Button>
         </AnimatedContainer>
       </div>
@@ -453,9 +453,9 @@ const PlayerQuiz = () => {
           <div className="mb-4">
             <Award className="h-16 w-16 mx-auto mb-4 text-quiz-yellow" />
           </div>
-          <h2 className="text-3xl font-bold mb-4 text-high-contrast">Game Over!</h2>
+          <h2 className="text-3xl font-bold mb-4 text-high-contrast">Thankyou for Joining!</h2>
           
-          <div className="py-6">
+          {/* <div className="py-6">
             <p className="text-muted-foreground mb-2">You finished</p>
             <div className={cn(
               "text-4xl font-bold mb-2",
@@ -478,7 +478,7 @@ const PlayerQuiz = () => {
                 {player.answers.filter(a => a.correct).length}/{player.answers.length}
               </p>
             </div>
-          </div>
+          </div> */}
         </AnimatedContainer>
         
         <AnimatedContainer delay={100} className="text-center">
