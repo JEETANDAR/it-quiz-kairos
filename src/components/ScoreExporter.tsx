@@ -3,6 +3,7 @@ import React from "react";
 import { FileSpreadsheet } from "lucide-react";
 import Button from "./Button";
 import { Player } from "@/lib/quizStore";
+import { cn } from "@/lib/utils";
 
 interface ScoreExporterProps {
   players: Player[];

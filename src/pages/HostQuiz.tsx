@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -8,6 +9,7 @@ import ScoreExporter from "@/components/ScoreExporter";
 import { getQuizById, getGameSessionById, createGameSession, startGame, advanceQuestion, endGame, Quiz, GameSession, Question } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Award, User } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 enum HostView {
   LOBBY,
@@ -152,39 +154,44 @@ const HostQuiz = () => {
       console.log("Audio playback prevented - user hasn't interacted with the document yet");
     });
 
+    // Debug logs
+    console.log("Current game session before advancing:", gameSession);
+    
     const nextQuestionIndex = advanceQuestion(gameSession.id);
+    console.log("Next question index result:", nextQuestionIndex);
+    
+    // Get updated session
+    const updatedSession = getGameSessionById(gameSession.id);
+    console.log("Updated session after advancing:", updatedSession);
+    
+    if (updatedSession) {
+      setGameSession(updatedSession);
+    }
 
-    console.log("Debug - Next Question Index:", nextQuestionIndex);
-    console.log("Debug - Current Index:", gameSession.currentQuestionIndex);
-    console.log("Debug - Total Questions:", gameSession.selectedQuestions?.length || quiz.questions.length);
-
-    if (nextQuestionIndex === null || nextQuestionIndex === -1) {
-      // Check if we've reached the end of all questions
-      const totalQuestions = gameSession.selectedQuestions?.length || quiz.questions.length;
-      if (gameSession.currentQuestionIndex + 1 >= totalQuestions) {
-        const endSound = new Audio('/end-game.mp3');
-        endSound.play().catch(() => {
-          console.log("Audio playback prevented - user hasn't interacted with the document yet");
-        });
-
-        const finalSession = getGameSessionById(gameSession.id);
-        if (finalSession) {
-          setGameSession(finalSession);
-          setHostView(HostView.FINAL_RESULTS);
-        }
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to advance to the next question",
-          variant: "destructive",
-        });
-      }
+    if (nextQuestionIndex === null) {
+      toast({
+        title: "Error",
+        description: "Failed to advance to the next question",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (nextQuestionIndex === -1) {
+      // We've reached the end of all questions
+      const endSound = new Audio('/end-game.mp3');
+      endSound.play().catch(() => {
+        console.log("Audio playback prevented - user hasn't interacted with the document yet");
+      });
+      
+      setHostView(HostView.FINAL_RESULTS);
       return;
     }
 
+    // Get the next question
     let nextQuestion = null;
-    if (gameSession.selectedQuestions && gameSession.selectedQuestions[nextQuestionIndex]) {
-      nextQuestion = gameSession.selectedQuestions[nextQuestionIndex];
+    if (updatedSession && updatedSession.selectedQuestions && updatedSession.selectedQuestions[nextQuestionIndex]) {
+      nextQuestion = updatedSession.selectedQuestions[nextQuestionIndex];
     } else if (quiz) {
       nextQuestion = quiz.questions[nextQuestionIndex];
     }
@@ -193,11 +200,12 @@ const HostQuiz = () => {
       setCurrentQuestion(nextQuestion);
       setHostView(HostView.QUESTION);
       setTimerActive(true);
-
-      const updatedSession = getGameSessionById(gameSession.id);
-      if (updatedSession) {
-        setGameSession(updatedSession);
-      }
+    } else {
+      toast({
+        title: "Error",
+        description: "Could not find the next question",
+        variant: "destructive",
+      });
     }
   };
 
@@ -394,7 +402,7 @@ const HostQuiz = () => {
             onClick={handleNextQuestion}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-lg transition-all"
           >
-            {freshGameSession.currentQuestionIndex < (freshGameSession.selectedQuestions?.length - 1 || 0) 
+            {freshGameSession.currentQuestionIndex < (freshGameSession.selectedQuestions?.length - 1 || quiz?.questions.length - 1 || 0) 
               ? "Next Question" 
               : "See Final Results"}
           </Button>

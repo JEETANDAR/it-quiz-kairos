@@ -495,13 +495,22 @@ export const advanceQuestion = (gameId: string): number | null => {
   const session = sessions[sessionIndex];
   const newQuestionIndex = session.currentQuestionIndex + 1;
   
-  const questionCount = session.selectedQuestions?.length || 0;
-  if (newQuestionIndex >= questionCount) {
+  // Check if we're out of questions
+  const totalQuestions = session.selectedQuestions?.length || 0;
+  
+  // Debug log
+  console.log("Total questions:", totalQuestions);
+  console.log("Current index:", session.currentQuestionIndex);
+  console.log("New index:", newQuestionIndex);
+  
+  if (newQuestionIndex >= totalQuestions) {
+    // Mark the game as finished
     session.status = "finished";
     localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));
     return -1; // Indicates quiz is finished
   }
   
+  // Update the current question index
   session.currentQuestionIndex = newQuestionIndex;
   localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));
   return newQuestionIndex;
