@@ -3,7 +3,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import AnimatedContainer from "./AnimatedContainer";
 import { Question } from "@/lib/quizStore";
-import { Check, X, Star, Zap, CircleDot, Triangle } from "lucide-react";
+import { Check, X, Hexagon, Square, CircleDot, Triangle } from "lucide-react";
 
 interface QuestionCardProps {
   question: Question;
@@ -13,7 +13,6 @@ interface QuestionCardProps {
   correctAnswer?: number;
   isHost?: boolean;
   playerView?: boolean;
-  className?: string;
 }
 
 const QuestionCard = ({
@@ -23,17 +22,16 @@ const QuestionCard = ({
   selectedAnswer,
   correctAnswer,
   isHost = false,
-  playerView = false,
-  className
+  playerView = false
 }: QuestionCardProps) => {
   const colors = ["quiz-option-red", "quiz-option-blue", "quiz-option-yellow", "quiz-option-green"];
   
   // Cool shape icons for each option
   const optionIcons = [
     <CircleDot className="h-7 w-7" />, 
+    <Square className="h-7 w-7" />, 
     <Triangle className="h-7 w-7" />, 
-    <Star className="h-7 w-7" />, 
-    <Zap className="h-7 w-7" />
+    <Hexagon className="h-7 w-7" />
   ];
 
   const renderOption = (option: string, index: number) => {
@@ -65,8 +63,8 @@ const QuestionCard = ({
           disabled={answered || isHost}
         >
           {playerView && !isHost ? (
-            <div className="flex items-center justify-center h-full w-full">
-              <div className={`w-16 h-16 ${index === 0 ? "rounded-full" : index === 1 ? "rounded-xl" : index === 2 ? "rounded-lg" : "rounded-full"} bg-white flex items-center justify-center`}>
+            <div className="flex items-center justify-center h-full">
+              <div className={`w-16 h-16 ${index === 0 ? "rounded-full" : index === 1 ? "rounded" : index === 2 ? "rounded-full rounded-tl-none" : "rounded-xl"} bg-white flex items-center justify-center`}>
                 {answered && index === correctAnswer && <Check className="h-6 w-6 text-green-600" />}
                 {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-6 w-6 text-red-600" />}
                 {!answered && optionIcons[index]}
@@ -78,15 +76,15 @@ const QuestionCard = ({
                 {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
                 {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
               </div>}
-              {index === 1 && <div className="w-6 h-6 bg-white rounded-xl flex items-center justify-center">
+              {index === 1 && <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
                 {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
                 {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
               </div>}
-              {index === 2 && <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center">
+              {index === 2 && <div className="w-6 h-6 bg-white rounded-full rounded-tl-none flex items-center justify-center">
                 {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
                 {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
               </div>}
-              {index === 3 && <div className="w-6 h-6 bg-white rounded-full border-2 border-white/80 flex items-center justify-center">
+              {index === 3 && <div className="w-6 h-6 bg-white rounded-xl border-2 border-white/80 flex items-center justify-center">
                 {answered && index === correctAnswer && <Check className="h-4 w-4 text-green-600" />}
                 {answered && index === selectedAnswer && index !== correctAnswer && <X className="h-4 w-4 text-red-600" />}
               </div>}
@@ -99,7 +97,7 @@ const QuestionCard = ({
   };
 
   return (
-    <div className={cn("w-full max-w-2xl mx-auto", className)}>
+    <div className="w-full max-w-2xl mx-auto">
       {(!playerView || isHost) && (
         <AnimatedContainer delay={50} animation="slide-down" className="w-full">
           <div className="bg-card rounded-xl p-6 shadow-sm mb-6 border border-white/10">
@@ -118,8 +116,8 @@ const QuestionCard = ({
       )}
 
       <div className={cn(
-        "grid gap-4",
-        playerView && !isHost ? "grid-cols-2 justify-items-center max-w-md mx-auto" : "grid-cols-1 sm:grid-cols-2"
+        "grid gap-10",
+        playerView && !isHost ? "grid-cols-2 sm:grid-cols-2 justify-items-center max-w-md mx-auto" : "grid-cols-2"
       )}>
         {question.options.map((option, index) => renderOption(option, index))}
       </div>

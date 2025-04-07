@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -9,7 +8,6 @@ import ScoreExporter from "@/components/ScoreExporter";
 import { getQuizById, getGameSessionById, createGameSession, startGame, advanceQuestion, endGame, Quiz, GameSession, Question } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Award, User } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 enum HostView {
   LOBBY,
@@ -154,69 +152,52 @@ const HostQuiz = () => {
       console.log("Audio playback prevented - user hasn't interacted with the document yet");
     });
 
-    // Debug logs
-    console.log("Current game session before advancing:", gameSession);
-    console.log("Current question index:", gameSession.currentQuestionIndex);
-    console.log("Selected questions length:", gameSession.selectedQuestions?.length);
-    console.log("Quiz questions length:", quiz.questions.length);
-    
     const nextQuestionIndex = advanceQuestion(gameSession.id);
-    console.log("Next question index result:", nextQuestionIndex);
-    
-    // Get updated session
-    const updatedSession = getGameSessionById(gameSession.id);
-    console.log("Updated session after advancing:", updatedSession);
-    
-    if (!updatedSession) {
-      toast({
-        title: "Error",
-        description: "Failed to update the game session",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setGameSession(updatedSession);
 
-    if (nextQuestionIndex === null) {
-      toast({
-        title: "Error",
-        description: "Failed to advance to the next question",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (nextQuestionIndex === -1) {
-      // We've reached the end of all questions
-      const endSound = new Audio('/end-game.mp3');
-      endSound.play().catch(() => {
-        console.log("Audio playback prevented - user hasn't interacted with the document yet");
-      });
-      
-      setHostView(HostView.FINAL_RESULTS);
+    console.log("Debug - Next Question Index:", nextQuestionIndex);
+    console.log("Debug - Current Index:", gameSession.currentQuestionIndex);
+    console.log("Debug - Total Questions:", gameSession.selectedQuestions?.length || quiz.questions.length);
+
+    if (nextQuestionIndex === null || nextQuestionIndex === -1) {
+      // Check if we've reached the end of all questions
+      const totalQuestions = gameSession.selectedQuestions?.length || quiz.questions.length;
+      if (gameSession.currentQuestionIndex + 1 >= totalQuestions) {
+        const endSound = new Audio('/end-game.mp3');
+        endSound.play().catch(() => {
+          console.log("Audio playback prevented - user hasn't interacted with the document yet");
+        });
+
+        const finalSession = getGameSessionById(gameSession.id);
+        if (finalSession) {
+          setGameSession(finalSession);
+          setHostView(HostView.FINAL_RESULTS);
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to advance to the next question",
+          variant: "destructive",
+        });
+      }
       return;
     }
 
-    // Get the next question
     let nextQuestion = null;
-    if (updatedSession.selectedQuestions && updatedSession.selectedQuestions[nextQuestionIndex]) {
-      nextQuestion = updatedSession.selectedQuestions[nextQuestionIndex];
-    } else if (quiz.questions && quiz.questions[nextQuestionIndex]) {
+    if (gameSession.selectedQuestions && gameSession.selectedQuestions[nextQuestionIndex]) {
+      nextQuestion = gameSession.selectedQuestions[nextQuestionIndex];
+    } else if (quiz) {
       nextQuestion = quiz.questions[nextQuestionIndex];
     }
 
     if (nextQuestion) {
-      console.log("Setting next question:", nextQuestion);
       setCurrentQuestion(nextQuestion);
       setHostView(HostView.QUESTION);
       setTimerActive(true);
-    } else {
-      toast({
-        title: "Error",
-        description: "Could not find the next question",
-        variant: "destructive",
-      });
+
+      const updatedSession = getGameSessionById(gameSession.id);
+      if (updatedSession) {
+        setGameSession(updatedSession);
+      }
     }
   };
 
@@ -308,21 +289,21 @@ const HostQuiz = () => {
     if (!currentQuestion) return null;
 
     const updatedGameSession = getGameSessionById(gameSession?.id || "");
-    
-    if (!updatedGameSession) return null;
-    
-    const answeredPlayers = updatedGameSession.players.filter(player => 
+    const answeredCount = updatedGameSession ? updatedGameSession.players.filter(player => 
       player.answers.some(a => a.questionIndex === updatedGameSession.currentQuestionIndex)
-    );
+    ).length : 0;
 
-    const totalQuestions = updatedGameSession.selectedQuestions?.length || quiz?.questions.length || 0;
+    const answeredPlayers = updatedGameSession ? updatedGameSession.players.filter(player => 
+      player.answers.some(a => a.questionIndex === updatedGameSession.currentQuestionIndex)
+    ) : [];
 
     return (
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <AnimatedContainer>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Question {updatedGameSession.currentQuestionIndex + 1} / {totalQuestions}
+              Question {gameSession?.currentQuestionIndex !== undefined ? gameSession.currentQuestionIndex + 1 : ""}
+              {gameSession ? ` / ${gameSession.selectedQuestions?.length || quiz?.questions.length}` : ""}
             </h2>
           </AnimatedContainer>
           <AnimatedContainer delay={100}>
@@ -343,13 +324,7 @@ const HostQuiz = () => {
         />
 
         <AnimatedContainer delay={150} className="glass rounded-2xl p-6 mt-6 bg-opacity-80">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-white">
-              Teams Answered: {answeredPlayers.length}/{updatedGameSession.players.length}
-            </h3>
-          </div>
-
-          {answeredPlayers.length > 0 ? (
+          {answeredCount > 0 && (
             <div className="flex flex-wrap justify-center gap-3">
               {answeredPlayers.map(player => (
                 <div 
@@ -360,10 +335,6 @@ const HostQuiz = () => {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-gray-400">Waiting for teams to answer...</p>
-            </div>
           )}
         </AnimatedContainer>
       </div>
@@ -373,17 +344,12 @@ const HostQuiz = () => {
   const renderQuestionResults = () => {
     if (!currentQuestion || !gameSession) return null;
 
-    const freshGameSession = getGameSessionById(gameSession.id) || gameSession;
-    
-    const playerAnswers = freshGameSession.players.flatMap(player => 
-      player.answers.filter(a => a.questionIndex === freshGameSession.currentQuestionIndex)
+    const playerAnswers = gameSession.players.flatMap(player => 
+      player.answers.filter(a => a.questionIndex === gameSession.currentQuestionIndex)
     );
 
     const totalResponses = playerAnswers.length;
     const correctResponses = playerAnswers.filter(a => a.correct).length;
-    
-    const totalQuestions = freshGameSession.selectedQuestions?.length || quiz?.questions.length || 0;
-    const isLastQuestion = freshGameSession.currentQuestionIndex >= totalQuestions - 1;
 
     return (
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
@@ -392,7 +358,7 @@ const HostQuiz = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-8 sm:gap-12 mb-6">
             <div>
               <p className="text-sm text-gray-400 mb-2">Responses</p>
-              <p className="text-3xl sm:text-4xl font-bold text-white">{totalResponses}/{freshGameSession.players.length}</p>
+              <p className="text-3xl sm:text-4xl font-bold text-white">{totalResponses}/{gameSession.players.length}</p>
             </div>
             <div>
               <p className="text-sm text-gray-400 mb-2">Correct</p>
@@ -417,9 +383,9 @@ const HostQuiz = () => {
             onClick={handleNextQuestion}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-lg transition-all"
           >
-            {isLastQuestion 
-              ? "See Final Results" 
-              : "Next Question"}
+            {gameSession.currentQuestionIndex < (gameSession.selectedQuestions?.length - 1 || 0) 
+              ? "Next Question" 
+              : "See Final Results"}
           </Button>
         </AnimatedContainer>
       </div>

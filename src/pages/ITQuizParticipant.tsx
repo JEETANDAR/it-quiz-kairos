@@ -13,7 +13,7 @@ const ITQuizParticipant = () => {
   const [isJoining, setIsJoining] = useState(false);
   const [gameExists, setGameExists] = useState(true);
   
-  // Check if the game exists on component mount
+  // Check if the game exists on component mount and reset all players
   useEffect(() => {
     const gameId = "ITQUIZ";
     let gameSession = getGameSessionById(gameId);
@@ -45,19 +45,9 @@ const ITQuizParticipant = () => {
       }
     }
     
-    // Reset game state if it's not in waiting status
-    if (gameSession && gameSession.status !== "waiting") {
-      gameSession.status = "waiting";
-      gameSession.currentQuestionIndex = -1;
-      
-      // Update the session in localStorage
-      const sessions = JSON.parse(localStorage.getItem("kahoot_clone_sessions") || "[]");
-      const sessionIndex = sessions.findIndex(s => s.id === gameSession.id);
-      
-      if (sessionIndex !== -1) {
-        sessions[sessionIndex] = gameSession;
-        localStorage.setItem("kahoot_clone_sessions", JSON.stringify(sessions));
-      }
+    // Clear all existing players when the page loads to ensure a fresh start
+    if (gameSession) {
+      clearAllPlayers(gameId);
     }
   }, [toast]);
   
