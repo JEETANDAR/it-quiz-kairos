@@ -7,9 +7,18 @@ import { Player } from "@/lib/quizStore";
 interface ScoreExporterProps {
   players: Player[];
   quizTitle: string;
+  asButton?: boolean;
+  buttonText?: string;
+  className?: string;
 }
 
-const ScoreExporter: React.FC<ScoreExporterProps> = ({ players, quizTitle }) => {
+const ScoreExporter: React.FC<ScoreExporterProps> = ({ 
+  players, 
+  quizTitle, 
+  asButton = false, 
+  buttonText = "Download Scores",
+  className
+}) => {
   const downloadExcel = () => {
     // Create CSV header
     const headers = ["Rank", "Team Name", "Score", "Correct Answers", "Total Questions"];
@@ -57,10 +66,21 @@ const ScoreExporter: React.FC<ScoreExporterProps> = ({ players, quizTitle }) => 
     URL.revokeObjectURL(url);
   };
 
+  if (asButton) {
+    return (
+      <button 
+        onClick={downloadExcel} 
+        className={className}
+      >
+        {buttonText}
+      </button>
+    );
+  }
+
   return (
     <Button 
       onClick={downloadExcel} 
-      className="flex items-center gap-2"
+      className={cn("flex items-center gap-2", className)}
       variant="primary"
     >
       <FileSpreadsheet size={18} />

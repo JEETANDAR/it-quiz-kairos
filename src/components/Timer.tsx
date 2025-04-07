@@ -7,13 +7,15 @@ interface TimerProps {
   onTimeUp?: () => void;
   isActive?: boolean;
   size?: "sm" | "md" | "lg";
+  className?: string;
 }
 
 const Timer: React.FC<TimerProps> = ({
   duration,
   onTimeUp,
   isActive = true,
-  size = "md"
+  size = "md",
+  className
 }) => {
   const [secondsLeft, setSecondsLeft] = useState(duration);
   const circleRef = useRef<SVGCircleElement>(null);
@@ -126,7 +128,7 @@ const Timer: React.FC<TimerProps> = ({
   };
 
   return (
-    <div className={cn("relative flex items-center justify-center", getTimerSize())}>
+    <div className={cn("relative flex items-center justify-center", getTimerSize(), className)}>
       <svg className="h-full w-full -rotate-90">
         <circle
           className="text-gray-600/20"
