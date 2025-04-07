@@ -157,7 +157,8 @@ const HostQuiz = () => {
     // Debug logs
     console.log("Current game session before advancing:", gameSession);
     console.log("Current question index:", gameSession.currentQuestionIndex);
-    console.log("Selected questions count:", gameSession.selectedQuestions?.length);
+    console.log("Selected questions length:", gameSession.selectedQuestions?.length);
+    console.log("Quiz questions length:", quiz.questions.length);
     
     const nextQuestionIndex = advanceQuestion(gameSession.id);
     console.log("Next question index result:", nextQuestionIndex);
