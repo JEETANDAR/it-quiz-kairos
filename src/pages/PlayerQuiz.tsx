@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "@/components/Button";
@@ -14,7 +15,7 @@ import {
   Player
 } from "@/lib/quizStore";
 import { useToast } from "@/hooks/use-toast";
-import { HourglassIcon, Award, Check, X, Trophy, Users } from "lucide-react";
+import { HourglassIcon, Award, Check, X } from "lucide-react";
 
 enum PlayerView {
   WAITING,
@@ -39,7 +40,6 @@ const PlayerQuiz = () => {
   const [sessionRefreshInterval, setSessionRefreshInterval] = useState<number | null>(null);
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null);
   const [pointsEarned, setPointsEarned] = useState<number>(0);
-  const [showLeaderboard, setShowLeaderboard] = useState<boolean>(false);
 
   useEffect(() => {
     if (!gameId) {
@@ -99,6 +99,14 @@ const PlayerQuiz = () => {
           
           if (hasAnsweredCurrent) {
             setPlayerView(PlayerView.ANSWER_SUBMITTED);
+            
+            // Get the answer to show correct/incorrect feedback
+            const currentAnswer = playerObj.answers.find(a => a.questionIndex === session.currentQuestionIndex);
+            if (currentAnswer) {
+              setAnswerCorrect(currentAnswer.correct);
+              setPointsEarned(currentAnswer.points);
+              setSelectedAnswer(currentAnswer.answerIndex);
+            }
           } else {
             // Use selectedQuestions if available
             if (session.selectedQuestions && session.selectedQuestions.length > 0) {
@@ -110,6 +118,8 @@ const PlayerQuiz = () => {
             setAnswerTime(Date.now());
           }
         } else {
+          // Player not found in session, redirect to home
+          sessionStorage.removeItem("currentPlayer");
           navigate("/");
         }
       } else if (session.status === "finished") {
@@ -142,7 +152,21 @@ const PlayerQuiz = () => {
       // Always update the game session to ensure scores are current
       setGameSession(updatedSession);
       
+      // Check if player still exists in the session
+      const playerExists = updatedSession.players.some(p => p.id === currentPlayer.playerId);
+      if (!playerExists) {
+        clearInterval(interval);
+        toast({
+          title: "Team removed",
+          description: "Your team has been removed from the game",
+        });
+        sessionStorage.removeItem("currentPlayer");
+        navigate("/");
+        return;
+      }
+      
       if (updatedSession.status === "active" && playerView === PlayerView.WAITING) {
+        // Game just started
         // Use selectedQuestions if available
         if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
           setCurrentQuestion(updatedSession.selectedQuestions[updatedSession.currentQuestionIndex]);
@@ -154,21 +178,41 @@ const PlayerQuiz = () => {
         setSelectedAnswer(null);
       } else if (updatedSession.status === "active" && 
                 gameSession?.currentQuestionIndex !== updatedSession.currentQuestionIndex) {
+        // New question
         // Use selectedQuestions if available
         if (updatedSession.selectedQuestions && updatedSession.selectedQuestions.length > 0) {
           setCurrentQuestion(updatedSession.selectedQuestions[updatedSession.currentQuestionIndex]);
         } else if (quiz) {
           setCurrentQuestion(quiz.questions[updatedSession.currentQuestionIndex]);
         }
-        setPlayerView(PlayerView.QUESTION);
-        setAnswerTime(Date.now());
-        setSelectedAnswer(null);
-        setAnswerCorrect(null);
-        setPointsEarned(0);
+        
+        // Check if player has already answered this question (in case of reconnect)
+        const playerObj = updatedSession.players.find(p => p.id === currentPlayer.playerId);
+        const hasAnsweredCurrent = playerObj?.answers.some(
+          a => a.questionIndex === updatedSession.currentQuestionIndex
+        );
+        
+        if (hasAnsweredCurrent) {
+          setPlayerView(PlayerView.ANSWER_SUBMITTED);
+          
+          // Get the answer to show correct/incorrect feedback
+          const currentAnswer = playerObj?.answers.find(a => a.questionIndex === updatedSession.currentQuestionIndex);
+          if (currentAnswer) {
+            setAnswerCorrect(currentAnswer.correct);
+            setPointsEarned(currentAnswer.points);
+            setSelectedAnswer(currentAnswer.answerIndex);
+          }
+        } else {
+          setPlayerView(PlayerView.QUESTION);
+          setAnswerTime(Date.now());
+          setSelectedAnswer(null);
+          setAnswerCorrect(null);
+          setPointsEarned(0);
+        }
       } else if (updatedSession.status === "finished" && gameSession?.status !== "finished") {
         setPlayerView(PlayerView.FINAL_RESULTS);
       }
-    }, 300); // More frequent updates for better score syncing
+    }, 500); // More frequent updates for better responsiveness
     
     setSessionRefreshInterval(interval);
     
@@ -206,11 +250,6 @@ const PlayerQuiz = () => {
       sound.play().catch((err) => {
         console.log("Error playing sound:", err);
       });
-      
-      // Show leaderboard after answer feedback
-      setTimeout(() => {
-        setPlayerView(PlayerView.LEADERBOARD);
-      }, 1500);
     } else {
       toast({
         title: "Error submitting answer",
@@ -220,7 +259,7 @@ const PlayerQuiz = () => {
     }
   };
 
-  const handleToggleLeaderboard = () => {
+  const handleToggleView = () => {
     if (playerView === PlayerView.ANSWER_SUBMITTED) {
       setPlayerView(PlayerView.LEADERBOARD);
     } else if (playerView === PlayerView.LEADERBOARD) {
@@ -313,7 +352,7 @@ const PlayerQuiz = () => {
                   <Check className="h-12 w-12 text-green-500" />
                 </div>
                 <h2 className="text-2xl font-semibold text-green-500 mb-2">Correct!</h2>
-                {/* <p className="text-xl font-bold mb-4 score-animate">+{pointsEarned} points</p> */}
+                <p className="text-xl font-bold mb-4 score-animate">+{pointsEarned} points</p>
               </>
             ) : answerCorrect === false ? (
               <>
@@ -345,11 +384,11 @@ const PlayerQuiz = () => {
           
           <Button 
             variant="outline" 
-            onClick={handleToggleLeaderboard}
+            onClick={handleToggleView}
             className="mt-6"
             size="sm"
           >
-            Next
+            See Scores
           </Button>
         </AnimatedContainer>
       </div>
@@ -359,79 +398,43 @@ const PlayerQuiz = () => {
   const renderLeaderboard = () => {
     if (!gameSession || !currentPlayer) return null;
     
-    // Get a fresh copy of the game session to ensure the leaderboard is up to date
-    const freshGameSession = getGameSessionById(gameSession.id) || gameSession;
-    
-    const playerRank = [...freshGameSession.players]
-      .sort((a, b) => b.totalPoints - a.totalPoints)
-      .findIndex(p => p.id === currentPlayer.playerId) + 1;
-    
-    const currentPlayerData = freshGameSession.players.find(p => p.id === currentPlayer.playerId);
+    // Get the current player data
+    const player = gameSession.players.find(p => p.id === currentPlayer.playerId);
+    if (!player) return null;
     
     return (
       <div className="max-w-md mx-auto">
         <AnimatedContainer className="glass rounded-xl p-8 text-center mb-6">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Trophy className="text-quiz-yellow" />
-            <h3 className="text-xl font-semibold text-high-contrast">Waiting for the Host to display the next question.</h3>
+          <h3 className="text-xl font-semibold text-high-contrast mb-4">Your Score</h3>
+          
+          <div className="mb-6">
+            <p className="text-3xl font-bold text-high-contrast">{player.totalPoints} points</p>
           </div>
           
-          {/* <div className="text-center mb-6">
-            <p className="text-muted-foreground mb-1">Your rank</p>
-            <p className={cn(
-              "text-2xl font-bold",
-              playerRank === 1 ? "text-quiz-yellow" :
-              playerRank === 2 ? "text-blue-500" :
-              playerRank === 3 ? "text-orange-500" : ""
-            )}>
-              {playerRank === 1 ? "1st" :
-               playerRank === 2 ? "2nd" :
-               playerRank === 3 ? "3rd" :
-               `${playerRank}th`} 
-              <span className="text-foreground"> of {freshGameSession.players.length}</span>
-            </p>
-            {currentPlayerData && (
-              <p className="text-xl font-semibold mt-2">
-                {currentPlayerData.totalPoints} points
-              </p>
-            )}
-          </div> */}
-          
-          {/* <div className="space-y-3 mt-4">
-            {[...freshGameSession.players]
-              .sort((a, b) => b.totalPoints - a.totalPoints)
-              .slice(0, 5) // Only show top 5 for simplicity
-              .map((player, index) => (
-              <div key={player.id} className={cn(
-                "leaderboard-item flex justify-between items-center p-3 rounded-lg",
-                player.id === currentPlayer.playerId ? "bg-secondary border border-primary/30" : 
-                index === 0 ? "bg-quiz-yellow/20 border border-quiz-yellow/30" : 
-                index === 1 ? "bg-blue-500/20 border border-blue-500/30" : 
-                index === 2 ? "bg-orange-500/20 border border-orange-500/30" : ""
-              )}>
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-7 h-7 rounded-full flex items-center justify-center text-white font-bold",
-                    index === 0 ? "bg-quiz-yellow" : 
-                    index === 1 ? "bg-blue-500" : 
-                    index === 2 ? "bg-orange-500" : "bg-muted"
-                  )}>
-                    {index + 1}
-                  </div>
-                  <span className="font-medium text-high-contrast">{player.name}</span>
-                </div>
-                <span className="font-semibold">{player.totalPoints} pts</span>
+          <div className="flex justify-center mb-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-secondary/50 p-3 rounded-lg">
+                <p className="text-sm text-gray-400 mb-1">Correct Answers</p>
+                <p className="text-lg font-semibold text-green-400">
+                  {player.answers.filter(a => a.correct).length}
+                </p>
               </div>
-            ))}
-          </div> */}
+              <div className="bg-secondary/50 p-3 rounded-lg">
+                <p className="text-sm text-gray-400 mb-1">Questions</p>
+                <p className="text-lg font-semibold text-high-contrast">
+                  {player.answers.length}
+                </p>
+              </div>
+            </div>
+          </div>
           
           <Button 
             variant="outline" 
-            onClick={handleToggleLeaderboard} 
+            onClick={handleToggleView} 
             className="mt-6"
             size="sm"
           >
-            Go Back
+            Back
           </Button>
         </AnimatedContainer>
       </div>
@@ -444,32 +447,17 @@ const PlayerQuiz = () => {
     const player = gameSession.players.find(p => p.id === currentPlayer.playerId);
     if (!player) return null;
     
-    const sortedPlayers = [...gameSession.players].sort((a, b) => b.totalPoints - a.totalPoints);
-    const playerRank = sortedPlayers.findIndex(p => p.id === player.id) + 1;
-    
     return (
       <div className="max-w-md mx-auto">
         <AnimatedContainer className="glass rounded-xl p-8 text-center mb-6">
           <div className="mb-4">
             <Award className="h-16 w-16 mx-auto mb-4 text-quiz-yellow" />
           </div>
-          <h2 className="text-3xl font-bold mb-4 text-high-contrast">Thankyou for Joining!</h2>
+          <h2 className="text-3xl font-bold mb-4 text-high-contrast">Thank you for Playing!</h2>
           
-          {/* <div className="py-6">
-            <p className="text-muted-foreground mb-2">You finished</p>
-            <div className={cn(
-              "text-4xl font-bold mb-2",
-              playerRank === 1 ? "text-quiz-yellow" :
-              playerRank === 2 ? "text-blue-500" :
-              playerRank === 3 ? "text-orange-500" : ""
-            )}>
-              {playerRank === 1 ? "1st" :
-               playerRank === 2 ? "2nd" :
-               playerRank === 3 ? "3rd" :
-               `${playerRank}th`}
-            </div>
+          <div className="py-6">
             <p className="text-xl font-semibold mb-6 text-high-contrast">
-              {player.totalPoints} points
+              You scored {player.totalPoints} points
             </p>
             
             <div className="mb-4">
@@ -478,10 +466,10 @@ const PlayerQuiz = () => {
                 {player.answers.filter(a => a.correct).length}/{player.answers.length}
               </p>
             </div>
-          </div> */}
+          </div>
         </AnimatedContainer>
         
-        <AnimatedContainer delay={100} className="text-center">
+        <AnimatedContainer delay={100} className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button onClick={handleLeaveGame} size="lg">
             Play Again
           </Button>

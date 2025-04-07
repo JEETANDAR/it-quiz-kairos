@@ -52,6 +52,19 @@ const ITQuizHost = () => {
       localStorage.setItem("kahoot_clone_sessions", JSON.stringify(sessions));
     }
     
+    // Always reset game to waiting status to ensure a fresh start
+    session.status = "waiting";
+    session.currentQuestionIndex = -1;
+    
+    // Update the session in localStorage
+    const sessions = JSON.parse(localStorage.getItem("kahoot_clone_sessions") || "[]");
+    const sessionIndex = sessions.findIndex((s: GameSession) => s.id === session?.id);
+    
+    if (sessionIndex !== -1) {
+      sessions[sessionIndex] = session;
+      localStorage.setItem("kahoot_clone_sessions", JSON.stringify(sessions));
+    }
+    
     setGameSession(session);
     
     // Store host session info
@@ -161,7 +174,7 @@ const ITQuizHost = () => {
 
         <div className="max-w-2xl mx-auto">
           <AnimatedContainer delay={100} className="glass rounded-xl p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
               <div className="flex items-center gap-2">
                 <Users className="text-blue-400" />
                 <h2 className="text-xl font-semibold text-white">
@@ -188,7 +201,7 @@ const ITQuizHost = () => {
                 <p className="text-gray-300">Waiting for teams to join...</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {gameSession.players.map((player, index) => (
                   <AnimatedContainer 
                     key={player.id} 

@@ -380,6 +380,17 @@ export const joinGame = (gameId: string, playerName: string): Player | null => {
     return null;
   }
   
+  // Check if a player with the same name already exists
+  const existingPlayerIndex = sessions[sessionIndex].players.findIndex(
+    player => player.name.toLowerCase() === playerName.toLowerCase()
+  );
+  
+  // If player exists, return that player to allow rejoining
+  if (existingPlayerIndex !== -1) {
+    return sessions[sessionIndex].players[existingPlayerIndex];
+  }
+  
+  // Otherwise create a new player
   const playerId = generateId();
   const player: Player = {
     id: playerId,
@@ -397,13 +408,20 @@ export const startGame = (gameId: string): GameSession | null => {
   const sessions = getGameSessions();
   const sessionIndex = sessions.findIndex(session => session.id === gameId);
   
-  if (sessionIndex === -1 || sessions[sessionIndex].status !== "waiting") {
+  if (sessionIndex === -1) {
     return null;
   }
   
+  // We now allow starting the game regardless of previous status
   sessions[sessionIndex].status = "active";
   sessions[sessionIndex].currentQuestionIndex = 0;
   sessions[sessionIndex].startTime = Date.now();
+  
+  // Reset all player answers when starting a new game
+  sessions[sessionIndex].players.forEach(player => {
+    player.answers = [];
+    player.totalPoints = 0;
+  });
   
   localStorage.setItem(GAME_SESSIONS_KEY, JSON.stringify(sessions));
   return sessions[sessionIndex];

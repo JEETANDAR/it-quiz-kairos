@@ -289,21 +289,20 @@ const HostQuiz = () => {
     if (!currentQuestion) return null;
 
     const updatedGameSession = getGameSessionById(gameSession?.id || "");
-    const answeredCount = updatedGameSession ? updatedGameSession.players.filter(player => 
+    
+    if (!updatedGameSession) return null;
+    
+    const answeredPlayers = updatedGameSession.players.filter(player => 
       player.answers.some(a => a.questionIndex === updatedGameSession.currentQuestionIndex)
-    ).length : 0;
-
-    const answeredPlayers = updatedGameSession ? updatedGameSession.players.filter(player => 
-      player.answers.some(a => a.questionIndex === updatedGameSession.currentQuestionIndex)
-    ) : [];
+    );
 
     return (
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <AnimatedContainer>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Question {gameSession?.currentQuestionIndex !== undefined ? gameSession.currentQuestionIndex + 1 : ""}
-              {gameSession ? ` / ${gameSession.selectedQuestions?.length || quiz?.questions.length}` : ""}
+              Question {updatedGameSession.currentQuestionIndex !== undefined ? updatedGameSession.currentQuestionIndex + 1 : ""}
+              {` / ${updatedGameSession.selectedQuestions?.length || quiz?.questions.length}`}
             </h2>
           </AnimatedContainer>
           <AnimatedContainer delay={100}>
@@ -324,7 +323,13 @@ const HostQuiz = () => {
         />
 
         <AnimatedContainer delay={150} className="glass rounded-2xl p-6 mt-6 bg-opacity-80">
-          {answeredCount > 0 && (
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-white">
+              Teams Answered: {answeredPlayers.length}/{updatedGameSession.players.length}
+            </h3>
+          </div>
+
+          {answeredPlayers.length > 0 ? (
             <div className="flex flex-wrap justify-center gap-3">
               {answeredPlayers.map(player => (
                 <div 
@@ -335,6 +340,10 @@ const HostQuiz = () => {
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-400">Waiting for teams to answer...</p>
+            </div>
           )}
         </AnimatedContainer>
       </div>
@@ -344,8 +353,10 @@ const HostQuiz = () => {
   const renderQuestionResults = () => {
     if (!currentQuestion || !gameSession) return null;
 
-    const playerAnswers = gameSession.players.flatMap(player => 
-      player.answers.filter(a => a.questionIndex === gameSession.currentQuestionIndex)
+    const freshGameSession = getGameSessionById(gameSession.id) || gameSession;
+    
+    const playerAnswers = freshGameSession.players.flatMap(player => 
+      player.answers.filter(a => a.questionIndex === freshGameSession.currentQuestionIndex)
     );
 
     const totalResponses = playerAnswers.length;
@@ -358,7 +369,7 @@ const HostQuiz = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-8 sm:gap-12 mb-6">
             <div>
               <p className="text-sm text-gray-400 mb-2">Responses</p>
-              <p className="text-3xl sm:text-4xl font-bold text-white">{totalResponses}/{gameSession.players.length}</p>
+              <p className="text-3xl sm:text-4xl font-bold text-white">{totalResponses}/{freshGameSession.players.length}</p>
             </div>
             <div>
               <p className="text-sm text-gray-400 mb-2">Correct</p>
@@ -383,7 +394,7 @@ const HostQuiz = () => {
             onClick={handleNextQuestion}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-lg transition-all"
           >
-            {gameSession.currentQuestionIndex < (gameSession.selectedQuestions?.length - 1 || 0) 
+            {freshGameSession.currentQuestionIndex < (freshGameSession.selectedQuestions?.length - 1 || 0) 
               ? "Next Question" 
               : "See Final Results"}
           </Button>
